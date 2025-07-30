@@ -74,11 +74,11 @@ export const emailAgent = pgTable("email_agent", {
     .references(() => user.id, { onDelete: "cascade" }),
   name: text("name").notNull(), // Used for email prefix: {name}@bg.inbound.new
   githubRepository: text("github_repository").notNull(),
-  githubRef: text("github_ref").notNull().$default("main"),
+  githubRef: text("github_ref").notNull().$default(() => "main"),
   cursorApiKey: text("cursor_api_key"), // Now optional - can use account default
-  model: text("model").notNull().$default("claude-4-sonnet-thinking"),
-  autoCreatePr: boolean("auto_create_pr").$default(false).notNull(),
-  isActive: boolean("is_active").$default(true).notNull(),
+  model: text("model").notNull().$default(() => "claude-4-sonnet-thinking"),
+  autoCreatePr: boolean("auto_create_pr").$default(() => false).notNull(),
+  isActive: boolean("is_active").$default(() => true).notNull(),
   // Sender permissions
   allowedDomains: text("allowed_domains"), // JSON array of allowed domains (e.g., ["@company.com", "@gmail.com"])
   allowedEmails: text("allowed_emails"), // JSON array of specific allowed emails

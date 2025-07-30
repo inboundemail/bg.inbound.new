@@ -28,7 +28,8 @@ export async function createEmailAgent(params: CreateEmailAgentParams): Promise<
       type: 'webhook',
       config: {
         url: params.webhookUrl,
-        method: 'POST'
+        timeout: 10000,
+        retryAttempts: 3
       }
     });
 
