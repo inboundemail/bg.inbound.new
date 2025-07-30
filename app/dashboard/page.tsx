@@ -35,12 +35,30 @@ interface AgentLog {
   agentName: string | null;
 }
 
+interface CursorAgent {
+  id: string;
+  status: string;
+  source: {
+    repository: string;
+    ref: string;
+  };
+  target: {
+    branchName: string;
+    url: string;
+    prUrl?: string;
+    autoCreatePr: boolean;
+  };
+  summary: string;
+}
+
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
   const [emailAgents, setEmailAgents] = useState<EmailAgent[]>([]);
   const [agentLogs, setAgentLogs] = useState<AgentLog[]>([]);
+  const [cursorAgents, setCursorAgents] = useState<CursorAgent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTabFocused, setIsTabFocused] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [hasDefaultKey, setHasDefaultKey] = useState(false);
   const [showKeyForm, setShowKeyForm] = useState(false);
@@ -62,9 +80,37 @@ export default function DashboardPage() {
     } else if (session) {
       fetchEmailAgents();
       fetchAgentLogs();
+      fetchCursorAgents();
       checkDefaultKey();
     }
   }, [session, isPending, router]);
+
+  // Auto-refresh functionality
+  useEffect(() => {
+    const handleFocus = () => setIsTabFocused(true);
+    const handleBlur = () => setIsTabFocused(false);
+    
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!session || !isTabFocused) return;
+    
+    const interval = setInterval(() => {
+      fetchAgentLogs();
+      fetchCursorAgents();
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [session, isTabFocused]);
+
+
 
   const fetchEmailAgents = async () => {
     try {
@@ -87,6 +133,18 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error fetching agent logs:', error);
+    }
+  };
+
+  const fetchCursorAgents = async () => {
+    try {
+      const response = await fetch('/api/cursor-agents');
+      if (response.ok) {
+        const data = await response.json();
+        setCursorAgents(data.activeAgents);
+      }
+    } catch (error) {
+      console.error('Error fetching cursor agents:', error);
     }
   };
 
@@ -259,6 +317,20 @@ export default function DashboardPage() {
     router.push("/signin");
   };
 
+  const scrollToCard = (cardId: string) => {
+    const element = document.getElementById(cardId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const navigationItems = [
+    { id: 'account', label: 'Config' },
+    { id: 'email-agents', label: 'Email Agents' },
+    { id: 'active-agents', label: 'Active Agents' },
+    { id: 'agent-logs', label: 'Logs' }
+  ];
+
   if (isPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -273,7 +345,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto relative">
         <div className="mb-8">
           <div className="flex justify-between items-start mb-6">
             <div className="flex items-center space-x-4">
@@ -289,12 +361,27 @@ export default function DashboardPage() {
           </div>
           <p className="text-center text-gray-600">Manage your email agents that convert emails into code changes.</p>
         </div>
+
+        {/* Navigation Menu */}
+        <div className="fixed left-[calc(50%-32rem-120px)] top-48 navigation-menu z-40">
+          <div className="space-y-3">
+            {navigationItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => scrollToCard(item.id)}
+                className="block text-left text-gray-500 hover:text-gray-700 transition-colors duration-150 text-sm whitespace-nowrap"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
         
         <div className="grid gap-6">
-          {/* User Info Card */}
-          <Card>
+          {/* Config Card */}
+          <Card id="account">
             <CardHeader>
-              <CardTitle>Your Account</CardTitle>
+              <CardTitle>Config</CardTitle>
               <CardDescription>Manage your account information and settings</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -402,10 +489,8 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-
-
           {/* Email Agents */}
-          <Card>
+          <Card id="email-agents">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Your Email Agents</CardTitle>
@@ -604,8 +689,80 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Agent Launch Logs */}
-          <Card>
+          {/* Active Cursor Agents */}
+          <Card id="active-agents">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>Active Cursor Agents</span>
+                <span className={`w-2 h-2 rounded-full ${cursorAgents.length > 0 ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+              </CardTitle>
+              <CardDescription>
+                Currently running background agents ({cursorAgents.length} active)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {cursorAgents.map((agent) => (
+                  <div key={agent.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                        <span className="font-semibold text-sm">{agent.status}</span>
+                        <span className="text-xs text-gray-500">•</span>
+                        <span className="text-xs text-gray-500">{agent.id}</span>
+                      </div>
+                      {agent.target.prUrl && (
+                        <a 
+                          href={agent.target.prUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 text-xs"
+                        >
+                          View PR →
+                        </a>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-900">{agent.summary}</p>
+                      
+                      <div className="flex flex-wrap gap-4 text-xs text-gray-600">
+                        <span>{agent.source.repository.replace('https://github.com/', '')}</span>
+                        <span>•</span>
+                        <span>{agent.source.ref} → {agent.target.branchName}</span>
+                        {agent.target.autoCreatePr && (
+                          <>
+                            <span>•</span>
+                            <span>Auto PR</span>
+                          </>
+                        )}
+                      </div>
+                      
+                      {agent.target.url && (
+                        <a 
+                          href={agent.target.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-xs text-blue-600 hover:text-blue-800"
+                        >
+                          View in Cursor →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {cursorAgents.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No active background agents.</p>
+                    <p>Send an email to trigger a new agent!</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Logs */}
+          <Card id="agent-logs">
             <CardHeader>
               <CardTitle>Agent Launch Log</CardTitle>
               <CardDescription>Recent attempts to launch Cursor agents from emails</CardDescription>
