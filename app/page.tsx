@@ -20,20 +20,17 @@ export default async function Home() {
         <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
           welcome to
           <img src="/cursor.jpeg" alt="Cursor Logo" className="inline h-12 w-12 ml-3 mr-2 rounded-md" />
-          clack
+          curmail
         </h1>
         <p className="text-lg text-gray-600 max-w-md mx-auto">
-          A secure Slack integration with magic link authentication
+          initiate background agents just by forwarding emails
         </p>
         <div className="flex flex-col space-y-4 max-w-sm mx-auto">
           <Link href="/signin">
             <Button size="lg" className="w-full">
-              Sign In
+              sign In
             </Button>
           </Link>
-          <p className="text-sm text-gray-500">
-            Sign in with your email to connect Slack workspaces and manage channels
-          </p>
         </div>
       </div>
     </div>

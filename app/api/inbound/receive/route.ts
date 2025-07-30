@@ -1,37 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Inbound, isInboundWebhook } from '@inboundemail/sdk'
+import { isInboundWebhook } from '@inboundemail/sdk'
 import type { InboundWebhookPayload } from '@inboundemail/sdk'
-import { db } from '@/lib/db'
-import { slackConnection } from '@/lib/schema'
-import { eq } from 'drizzle-orm'
-import { createSlackClient } from '@/lib/slack-api'
 
 export async function POST(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url)
-        const webhookId = searchParams.get('uuid')
-
-        if (!webhookId) {
-            return NextResponse.json(
-                { error: 'Missing webhook UUID' },
-                { status: 400 }
-            )
-        }
-
-        // Find the Slack connection for this webhook
-        const connection = await db
-            .select()
-            .from(slackConnection)
-            .where(eq(slackConnection.webhookId, webhookId))
-            .limit(1)
-
-        if (!connection.length || !connection[0].webhookActive) {
-            return NextResponse.json(
-                { error: 'Webhook not found or inactive' },
-                { status: 404 }
-            )
-        }
-
         const payload: InboundWebhookPayload = await request.json()
 
         // Validate webhook payload
@@ -43,32 +15,27 @@ export async function POST(request: NextRequest) {
         }
 
         const { email } = payload
-        const slackConn = connection[0]
 
-        // Process the email
-        console.log(`New email from: ${email.from?.text}`)
+        // Process and log the email
+        console.log('=== New Email Received ===')
+        console.log(`From: ${email.from?.text}`)
+        console.log(`To: ${email.to?.text}`)
         console.log(`Subject: ${email.subject}`)
         console.log(`Body: ${email.cleanedContent.text}`)
+        console.log('==========================')
 
-        // Send to Slack channel if we have a selected channel
-        if (slackConn.selectedChannelId && slackConn.accessToken) {
-            try {
-                const slack = createSlackClient(slackConn.accessToken)
-
-                // Format email for Slack
-                const slackMessage = `
-                <@U091E52CLVD> ${email.subject || 'No Subject'}
-                ${email.cleanedContent.text || email.cleanedContent.html || 'No content'}`
-
-                await slack.sendMessage(slackConn.selectedChannelId, slackMessage)
-                console.log(`Email forwarded to Slack channel: ${slackConn.selectedChannelName}`)
-            } catch (slackError) {
-                console.error('Failed to send to Slack:', slackError)
-                // Continue processing even if Slack fails
-            }
-        }
-
-        return NextResponse.json({ success: true })
+        console.log('⚠️  Generic webhook endpoint called - consider using specific config endpoints');
+        
+        // Provide helpful information about the new targeted approach
+        return NextResponse.json({ 
+          success: false,
+          message: 'This generic webhook endpoint is deprecated. Please use configuration-specific URLs.',
+          help: {
+            explanation: 'Each webhook configuration now has its own unique URL for targeted processing.',
+            format: '/api/inbound/receive/[configId]',
+            instructions: 'Visit your dashboard to get the specific webhook URL for each configuration.'
+          }
+        }, { status: 400 });
     } catch (error) {
         console.error('Webhook error:', error)
         return NextResponse.json(

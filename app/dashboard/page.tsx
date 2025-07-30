@@ -3,210 +3,254 @@
 import { useSession, signOut } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-interface SlackConnection {
+interface EmailAgent {
   id: string;
-  slackTeamId: string;
-  slackUserId: string;
-  slackTeamName?: string;
-  slackUserName?: string;
-  tokenType: string;
-  scope: string;
-  selectedChannelId?: string;
-  selectedChannelName?: string;
-  webhookId?: string;
-  webhookUrl?: string;
-  webhookActive?: boolean;
+  name: string;
+  githubRepository: string;
+  githubRef: string;
+  model: string;
+  autoCreatePr: boolean;
+  isActive: boolean;
+  emailAddress: string;
+  allowedDomains: string | null;
+  allowedEmails: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-interface SlackChannel {
+interface AgentLog {
   id: string;
-  name: string;
-  isPrivate: boolean;
-  isMember: boolean;
-  memberCount: number;
-  isArchived: boolean;
+  emailAgentId: string;
+  senderEmail: string;
+  emailSubject: string | null;
+  cursorAgentId: string | null;
+  status: 'success' | 'failed' | 'rejected';
+  errorMessage: string | null;
+  createdAt: string;
+  agentName: string | null;
 }
 
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [slackConnections, setSlackConnections] = useState<SlackConnection[]>([]);
-  const [loadingConnections, setLoadingConnections] = useState(true);
-  const [connectingToSlack, setConnectingToSlack] = useState(false);
-  const [browsingChannels, setBrowsingChannels] = useState<string | null>(null); // connectionId being browsed
-  const [channels, setChannels] = useState<SlackChannel[]>([]);
-  const [loadingChannels, setLoadingChannels] = useState(false);
-  const [generatingWebhook, setGeneratingWebhook] = useState<string | null>(null);
-  const [deletingWebhook, setDeletingWebhook] = useState<string | null>(null);
+  const [emailAgents, setEmailAgents] = useState<EmailAgent[]>([]);
+  const [agentLogs, setAgentLogs] = useState<AgentLog[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [hasDefaultKey, setHasDefaultKey] = useState(false);
+  const [showKeyForm, setShowKeyForm] = useState(false);
+  const [defaultKeyInput, setDefaultKeyInput] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    githubRepository: '',
+    githubRef: 'main',
+    cursorApiKey: '',
+    model: 'claude-4-sonnet-thinking',
+    autoCreatePr: false,
+    allowedDomains: '',
+    allowedEmails: ''
+  });
 
   useEffect(() => {
     if (!isPending && !session) {
       router.push("/signin");
+    } else if (session) {
+      fetchEmailAgents();
+      fetchAgentLogs();
+      checkDefaultKey();
     }
   }, [session, isPending, router]);
 
-  useEffect(() => {
-    if (session) {
-      loadSlackConnections();
-    }
-  }, [session]);
-
-  useEffect(() => {
-    // Check for success/error parameters
-    const slackConnected = searchParams.get('slack_connected');
-    const error = searchParams.get('error');
-
-    if (slackConnected === 'true') {
-      // Refresh connections list
-      loadSlackConnections();
-      // Clean URL
-      router.replace('/dashboard');
-    }
-
-    if (error) {
-      console.error('Slack connection error:', error);
-      // You could show a toast or alert here
-    }
-  }, [searchParams, router]);
-
-  const loadSlackConnections = async () => {
+  const fetchEmailAgents = async () => {
     try {
-      const response = await fetch('/api/slack/connections');
+      const response = await fetch('/api/webhooks');
       if (response.ok) {
         const data = await response.json();
-        setSlackConnections(data.connections);
+        setEmailAgents(data.agents);
       }
     } catch (error) {
-      console.error('Failed to load Slack connections:', error);
-    } finally {
-      setLoadingConnections(false);
+      console.error('Error fetching email agents:', error);
     }
   };
 
-  const handleConnectSlack = async () => {
-    setConnectingToSlack(true);
+  const fetchAgentLogs = async () => {
     try {
-      const response = await fetch('/api/slack/oauth');
+      const response = await fetch('/api/agent-logs?limit=20');
       if (response.ok) {
         const data = await response.json();
-        window.location.href = data.authUrl;
-      } else {
-        console.error('Failed to initiate Slack OAuth');
+        setAgentLogs(data.logs);
       }
     } catch (error) {
-      console.error('Slack OAuth error:', error);
-    } finally {
-      setConnectingToSlack(false);
+      console.error('Error fetching agent logs:', error);
     }
   };
 
-  const handleDisconnectSlack = async (connectionId: string) => {
+  const checkDefaultKey = async () => {
     try {
-      const response = await fetch(`/api/slack/connections?id=${connectionId}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        await loadSlackConnections();
-      }
-    } catch (error) {
-      console.error('Failed to disconnect Slack:', error);
-    }
-  };
-
-  const loadChannels = async (connection: SlackConnection) => {
-    setBrowsingChannels(connection.id);
-    setLoadingChannels(true);
-    try {
-      const response = await fetch(`/api/slack/channels?teamId=${connection.slackTeamId}`);
+      const response = await fetch('/api/user/cursor-key');
       if (response.ok) {
         const data = await response.json();
-        setChannels(data.channels);
-      } else {
-        console.error('Failed to load channels');
+        setHasDefaultKey(data.hasKey);
       }
     } catch (error) {
-      console.error('Failed to load channels:', error);
-    } finally {
-      setLoadingChannels(false);
+      console.error('Error checking default key:', error);
     }
   };
 
-  const saveSelectedChannel = async (connectionId: string, channel: SlackChannel) => {
+  const handleCreateEmailAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
     try {
-      const response = await fetch('/api/slack/connections', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          connectionId,
-          channelId: channel.id,
-          channelName: channel.name,
-        }),
-      });
-      if (response.ok) {
-        await loadSlackConnections();
-        setBrowsingChannels(null);
-        setChannels([]);
-      }
-    } catch (error) {
-      console.error('Failed to save selected channel:', error);
-    }
-  };
+      // Process form data to convert comma-separated strings to arrays
+      const processedData = {
+        ...formData,
+        allowedDomains: formData.allowedDomains 
+          ? formData.allowedDomains.split(',').map(d => d.trim()).filter(d => d.length > 0)
+          : [],
+        allowedEmails: formData.allowedEmails 
+          ? formData.allowedEmails.split(',').map(e => e.trim()).filter(e => e.length > 0)
+          : []
+      };
 
-  const generateWebhook = async (connectionId: string) => {
-    setGeneratingWebhook(connectionId);
-    try {
-      const response = await fetch('/api/slack/webhook', {
+      const response = await fetch('/api/webhooks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ connectionId }),
+        body: JSON.stringify(processedData),
       });
+
       if (response.ok) {
-        await loadSlackConnections();
+        setShowCreateForm(false);
+        setFormData({
+          name: '',
+          githubRepository: '',
+          githubRef: 'main',
+          cursorApiKey: '',
+          model: 'claude-4-sonnet-thinking',
+          autoCreatePr: false,
+          allowedDomains: '',
+          allowedEmails: ''
+        });
+        fetchEmailAgents();
+        fetchAgentLogs();
       } else {
-        console.error('Failed to generate webhook');
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
       }
     } catch (error) {
-      console.error('Failed to generate webhook:', error);
+      console.error('Error creating email agent:', error);
+      alert('Error creating email agent');
     } finally {
-      setGeneratingWebhook(null);
+      setIsLoading(false);
     }
   };
 
-  const deleteWebhook = async (connectionId: string) => {
-    setDeletingWebhook(connectionId);
+  const toggleEmailAgentStatus = async (id: string, isActive: boolean) => {
     try {
-      const response = await fetch(`/api/slack/webhook?connectionId=${connectionId}`, {
+      const response = await fetch(`/api/webhooks/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isActive: !isActive }),
+      });
+
+      if (response.ok) {
+        fetchEmailAgents();
+      }
+    } catch (error) {
+      console.error('Error toggling email agent status:', error);
+    }
+  };
+
+  const deleteEmailAgent = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this email agent? This will also delete the associated email address.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/webhooks/${id}`, {
         method: 'DELETE',
       });
+
       if (response.ok) {
-        await loadSlackConnections();
-      } else {
-        console.error('Failed to delete webhook');
+        fetchEmailAgents();
       }
     } catch (error) {
-      console.error('Failed to delete webhook:', error);
-    } finally {
-      setDeletingWebhook(null);
+      console.error('Error deleting email agent:', error);
     }
   };
 
-  const copyToClipboard = async (text: string) => {
+  const copyEmailAddress = async (emailAddress: string) => {
     try {
-      await navigator.clipboard.writeText(text);
-      // You could add a toast notification here
-      console.log('Copied to clipboard:', text);
+      await navigator.clipboard.writeText(emailAddress);
+      alert('Email address copied to clipboard!');
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = emailAddress;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('Email address copied to clipboard!');
+    }
+  };
+
+  const handleSaveDefaultKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('/api/user/cursor-key', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cursorApiKey: defaultKeyInput }),
+      });
+
+      if (response.ok) {
+        setHasDefaultKey(true);
+        setShowKeyForm(false);
+        setDefaultKeyInput('');
+        alert('Default Cursor API key saved successfully!');
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error saving default key:', error);
+      alert('Error saving default Cursor API key');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemoveDefaultKey = async () => {
+    if (!confirm('Are you sure you want to remove your default Cursor API key?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/user/cursor-key', {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setHasDefaultKey(false);
+        alert('Default Cursor API key removed successfully!');
+      }
+    } catch (error) {
+      console.error('Error removing default key:', error);
+      alert('Error removing default Cursor API key');
     }
   };
 
@@ -229,295 +273,379 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">Dashboard of {session.user.name}</h1>
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Welcome, {session.user.name}!</h1>
+          <p className="text-gray-600 mt-2">Manage your email agents that convert emails into code changes.</p>
         </div>
-        {/* User Info Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome to your Dashboard</CardTitle>
-            <CardDescription>Manage your account and Slack connections</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Email:</p>
-                <p className="text-sm text-gray-600">{session.user.email}</p>
+        
+        <div className="grid gap-6">
+          {/* User Info Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Account</CardTitle>
+              <CardDescription>Manage your account information and settings</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700">Email:</p>
+                  <p className="text-sm text-gray-600">{session.user.email}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700">Member Since:</p>
+                  <p className="text-sm text-gray-600">
+                    {new Date(session.user.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Member Since:</p>
-                <p className="text-sm text-gray-600">
-                  {new Date(session.user.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={handleSignOut}
-              variant="outline"
-              className="w-full"
-            >
-              Sign Out
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Slack Connections Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Slack Connections</CardTitle>
-            <CardDescription>
-              Connect your Slack workspaces to enable channel reading and message posting
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {loadingConnections ? (
-              <p className="text-sm text-gray-600">Loading connections...</p>
-            ) : slackConnections.length === 0 ? (
-              <div className="text-center py-8">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No Slack workspaces connected</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Get started by connecting your first Slack workspace.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {slackConnections.map((connection) => (
-                  <div key={connection.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <svg className="h-8 w-8 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {connection.slackTeamName || 'Slack Workspace'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Connected as {connection.slackUserName || 'User'}
-                        </p>
-                        {connection.selectedChannelName ? (
-                          <p className="text-xs text-green-600 font-medium">
-                            📁 #{connection.selectedChannelName}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-amber-600">
-                            ⚠️ No channel selected
-                          </p>
-                        )}
-                        {connection.webhookActive && connection.webhookUrl ? (
-                          <p className="text-xs text-blue-600 font-medium">
-                            🔗 Webhook Active
-                          </p>
-                        ) : (
-                          <p className="text-xs text-gray-400">
-                            📭 No webhook configured
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Connected
-                      </span>
+              
+              {/* Default Cursor API Key Section */}
+              <div className="pt-4 border-t space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Default Cursor API Key</p>
+                    <p className="text-xs text-gray-500">
+                      {hasDefaultKey ? 'Set as default for all new agents' : 'Not configured'}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    {hasDefaultKey ? (
+                      <>
+                        <Button
+                          onClick={() => setShowKeyForm(!showKeyForm)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          Update
+                        </Button>
+                        <Button
+                          onClick={handleRemoveDefaultKey}
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          Remove
+                        </Button>
+                      </>
+                    ) : (
                       <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => loadChannels(connection)}
-                        disabled={loadingChannels && browsingChannels === connection.id}
-                      >
-                        {loadingChannels && browsingChannels === connection.id ? "Loading..." : "Browse Channels"}
-                      </Button>
-                      <Button
+                        onClick={() => setShowKeyForm(!showKeyForm)}
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDisconnectSlack(connection.id)}
                       >
-                        Disconnect
+                        Set Default
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {showKeyForm && (
+                  <form onSubmit={handleSaveDefaultKey} className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="space-y-2">
+                      <Label htmlFor="defaultKey">Cursor API Key</Label>
+                      <Input
+                        id="defaultKey"
+                        type="password"
+                        value={defaultKeyInput}
+                        onChange={(e) => setDefaultKeyInput(e.target.value)}
+                        placeholder="Enter your Cursor API key"
+                        required
+                      />
+                      <p className="text-xs text-gray-500">
+                        This will be used as the default for all new email agents.{' '}
+                        <a href="https://cursor.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                          Get your API key
+                        </a>
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button type="submit" disabled={isLoading} size="sm">
+                        {isLoading ? 'Saving...' : 'Save Key'}
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setShowKeyForm(false);
+                          setDefaultKeyInput('');
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Cancel
                       </Button>
                     </div>
-                  </div>
-                ))}
+                  </form>
+                )}
               </div>
-                        )}
 
-            {/* Channel Browser */}
-            {browsingChannels && (
-              <Card className="mt-4">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">Select Channel</CardTitle>
-                      <CardDescription>
-                        Choose a channel for this workspace
-                      </CardDescription>
+              <div className="pt-4 border-t">
+                <Button
+                  onClick={handleSignOut}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Sign Out
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+
+
+          {/* Email Agents */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Your Email Agents</CardTitle>
+                <CardDescription>
+                  Create email agents that automatically generate code from emails
+                </CardDescription>
+              </div>
+              <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+                {showCreateForm ? 'Cancel' : 'Create Email Agent'}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {/* Create Form */}
+              {showCreateForm && (
+                <form onSubmit={handleCreateEmailAgent} className="space-y-4 mb-6 p-4 border rounded-lg bg-gray-50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Agent Name</Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="support-bot"
+                        required
+                      />
+                      <p className="text-xs text-gray-500">
+                        Will create email: <code>{formData.name || 'your-name'}@bg.inbound.new</code>
+                      </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setBrowsingChannels(null);
-                        setChannels([]);
-                      }}
-                    >
-                      Cancel
-                    </Button>
+                    <div className="space-y-2">
+                      <Label htmlFor="githubRepository">GitHub Repository</Label>
+                      <Input
+                        id="githubRepository"
+                        type="url"
+                        value={formData.githubRepository}
+                        onChange={(e) => setFormData({ ...formData, githubRepository: e.target.value })}
+                        placeholder="https://github.com/username/repo"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="githubRef">Branch/Ref</Label>
+                      <Input
+                        id="githubRef"
+                        type="text"
+                        value={formData.githubRef}
+                        onChange={(e) => setFormData({ ...formData, githubRef: e.target.value })}
+                        placeholder="main"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="model">AI Model</Label>
+                      <select
+                        id="model"
+                        value={formData.model}
+                        onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="claude-4-sonnet-thinking">Claude 4 Sonnet (Thinking)</option>
+                        <option value="gpt-4">GPT-4</option>
+                        <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                      </select>
+                    </div>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {loadingChannels ? (
-                    <div className="text-center py-4">
-                      <p className="text-sm text-gray-600">Loading channels...</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="cursorApiKey">
+                      Cursor API Key {hasDefaultKey && <span className="text-gray-500">(optional)</span>}
+                    </Label>
+                    <Input
+                      id="cursorApiKey"
+                      type="password"
+                      value={formData.cursorApiKey}
+                      onChange={(e) => setFormData({ ...formData, cursorApiKey: e.target.value })}
+                      placeholder={hasDefaultKey ? "Leave blank to use account default" : "Your Cursor API key"}
+                      required={!hasDefaultKey}
+                    />
+                    <p className="text-xs text-gray-500">
+                      {hasDefaultKey ? (
+                        'Leave blank to use your account default, or enter a specific key for this agent'
+                      ) : (
+                        <>
+                          Get your API key from{' '}
+                          <a href="https://cursor.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            Cursor Dashboard
+                          </a>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="allowedDomains">Allowed Domains (optional)</Label>
+                      <Input
+                        id="allowedDomains"
+                        type="text"
+                        value={formData.allowedDomains}
+                        onChange={(e) => setFormData({ ...formData, allowedDomains: e.target.value })}
+                        placeholder="@company.com, @gmail.com"
+                      />
+                      <p className="text-xs text-gray-500">
+                        Comma-separated domains. Leave blank to allow all.
+                      </p>
                     </div>
-                  ) : channels.length === 0 ? (
-                    <div className="text-center py-4">
-                      <p className="text-sm text-gray-600">No channels found</p>
+                    <div className="space-y-2">
+                      <Label htmlFor="allowedEmails">Allowed Emails (optional)</Label>
+                      <Input
+                        id="allowedEmails"
+                        type="text"
+                        value={formData.allowedEmails}
+                        onChange={(e) => setFormData({ ...formData, allowedEmails: e.target.value })}
+                        placeholder="user@company.com, admin@site.com"
+                      />
+                      <p className="text-xs text-gray-500">
+                        Comma-separated specific email addresses.
+                      </p>
                     </div>
-                  ) : (
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {channels.map((channel) => (
-                        <div
-                          key={channel.id}
-                          className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0">
-                              {channel.isPrivate ? (
-                                <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
-                              ) : (
-                                <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-                                </svg>
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                #{channel.name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {channel.isPrivate ? 'Private' : 'Public'} • {channel.memberCount} members
-                                {!channel.isMember && <span className="text-amber-600"> • Not a member</span>}
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            onClick={() => saveSelectedChannel(browsingChannels, channel)}
-                            disabled={!channel.isMember}
-                          >
-                            Select
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      id="autoCreatePr"
+                      type="checkbox"
+                      checked={formData.autoCreatePr}
+                      onChange={(e) => setFormData({ ...formData, autoCreatePr: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <Label htmlFor="autoCreatePr">Auto-create Pull Requests</Label>
+                  </div>
+                  <Button type="submit" disabled={isLoading} className="w-full">
+                    {isLoading ? 'Creating Email Agent...' : 'Create Email Agent'}
+                  </Button>
+                </form>
+              )}
 
-            {/* Webhook Management Section */}
-            {slackConnections.length > 0 && (
+              {/* Email Agents List */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">Email Webhook Management</h3>
-                <p className="text-sm text-gray-600">
-                  Generate webhook URLs to receive emails from Inbound and forward them to your selected Slack channels.
-                </p>
-                
-                {slackConnections.map((connection) => (
-                  <Card key={`webhook-${connection.id}`} className="p-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium">{connection.slackTeamName || 'Slack Workspace'}</h4>
-                          <p className="text-sm text-gray-500">
-                            {connection.selectedChannelName ? `#${connection.selectedChannelName}` : 'No channel selected'}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {connection.webhookActive && connection.webhookUrl ? (
-                            <>
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Active
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => deleteWebhook(connection.id)}
-                                disabled={deletingWebhook === connection.id}
-                              >
-                                {deletingWebhook === connection.id ? "Deleting..." : "Delete Webhook"}
-                              </Button>
-                            </>
-                          ) : (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => generateWebhook(connection.id)}
-                              disabled={!connection.selectedChannelId || generatingWebhook === connection.id}
-                            >
-                              {generatingWebhook === connection.id ? "Generating..." : "Generate Webhook"}
-                            </Button>
-                          )}
-                        </div>
+                {emailAgents.map((agent) => (
+                  <div key={agent.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-lg">{agent.name}</h3>
+                      <div className="flex items-center space-x-2">
+                        <span className={`w-2 h-2 rounded-full ${agent.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                        <Button
+                          onClick={() => toggleEmailAgentStatus(agent.id, agent.isActive)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          {agent.isActive ? 'Disable' : 'Enable'}
+                        </Button>
+                        <Button
+                          onClick={() => deleteEmailAgent(agent.id)}
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          Delete
+                        </Button>
                       </div>
-                      
-                      {connection.webhookActive && connection.webhookUrl && (
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-gray-700">Webhook URL:</p>
-                              <code className="text-xs bg-white px-2 py-1 rounded border break-all">
-                                {connection.webhookUrl}
-                              </code>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => copyToClipboard(connection.webhookUrl!)}
-                              className="ml-2 flex-shrink-0"
-                            >
-                              📋 Copy
-                            </Button>
-                          </div>
-                          <p className="text-xs text-gray-500 mt-2">
-                            Use this URL in your Inbound email service to receive webhooks. 
-                            Emails will be forwarded to #{connection.selectedChannelName}.
-                          </p>
-                        </div>
-                      )}
-                      
-                      {!connection.selectedChannelId && (
-                        <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg">
-                          <p className="text-sm text-amber-800">
-                            ⚠️ Please select a Slack channel first before generating a webhook.
-                          </p>
-                        </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="font-mono text-blue-600 break-all">
+                        {agent.emailAddress}
+                      </div>
+                      <Button 
+                        onClick={() => copyEmailAddress(agent.emailAddress)} 
+                        variant="outline" 
+                        size="sm"
+                      >
+                        Copy
+                      </Button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                      <span>{agent.githubRepository.replace('https://github.com/', '')}</span>
+                      <span>•</span>
+                      <span>{agent.githubRef}</span>
+                      <span>•</span>
+                      <span>{agent.model}</span>
+                      {agent.autoCreatePr && (
+                        <>
+                          <span>•</span>
+                          <span>Auto PR</span>
+                        </>
                       )}
                     </div>
-                  </Card>
+                  </div>
                 ))}
+                {emailAgents.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No email agents yet.</p>
+                    <p>Create your first email agent to start converting emails to code!</p>
+                  </div>
+                )}
               </div>
-            )}
-            
-            <Button
-              onClick={handleConnectSlack}
-              disabled={connectingToSlack}
-              className="w-full"
-            >
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" />
-              </svg>
-              {connectingToSlack ? "Connecting..." : "Connect Slack Workspace"}
-            </Button>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Agent Launch Logs */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Agent Launch Log</CardTitle>
+              <CardDescription>Recent attempts to launch Cursor agents from emails</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {agentLogs.map((log) => (
+                  <div key={log.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className={`w-2 h-2 rounded-full ${
+                          log.status === 'success' ? 'bg-green-500' : 
+                          log.status === 'rejected' ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}></span>
+                        <span className="font-medium text-sm">{log.agentName || 'Unknown Agent'}</span>
+                        <span className="text-xs text-gray-500">•</span>
+                        <span className="text-xs text-gray-500">{log.senderEmail}</span>
+                      </div>
+                      {log.emailSubject && (
+                        <p className="text-sm text-gray-600 mb-1">{log.emailSubject}</p>
+                      )}
+                      {log.errorMessage && (
+                        <p className="text-xs text-red-600">{log.errorMessage}</p>
+                      )}
+                      {log.cursorAgentId && (
+                        <p className="text-xs text-blue-600">Agent ID: {log.cursorAgentId}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        log.status === 'success' ? 'bg-green-100 text-green-800' : 
+                        log.status === 'rejected' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {log.status}
+                      </span>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(log.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {agentLogs.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No agent launches yet.</p>
+                    <p>Send an email to one of your agents to see logs here!</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

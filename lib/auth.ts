@@ -24,7 +24,7 @@ export const auth = betterAuth({
         await resend.emails.send({
           from: "noreply@inbound.new",
           to: email,
-          subject: "Sign in to Clack",
+          subject: "Sign in to bg.inbound",
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2>Sign in to Clack</h2>

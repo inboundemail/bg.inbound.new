@@ -1,0 +1,158 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+
+
+# This is the API and Documentation for the Cursor Background Agents
+
+Overview
+Programmatically create and manage background agents that work on your repositories
+
+​
+Background Agent API
+The Background Agent API allows you to programmatically create and manage AI-powered coding agents that work autonomously on your repositories. You can use the API to automatically respond to user feedback, fix bugs, update docs, and much more!
+​
+Key features
+Autonomous code generation - Create agents that can understand your prompt and make changes to your codebase
+Repository integration - Work directly with GitHub repositories
+Follow-up prompts - Add additional instructions to running agents
+Usage-based pricing - Pay only for the tokens you use
+Scalable - Support for up to 256 active agents per API key
+​
+Quick start
+​
+1. Get your API key
+Navigate to Cursor Dashboard → Background Agents → API Keys to create your API key.
+​
+2. Start using the API
+All API endpoints are relative to:
+
+Copy
+
+Ask AI
+https://api.cursor.com
+See the API reference for a detailed list of endpoints.
+​
+Authentication
+All API requests require authentication using a Bearer token:
+
+Copy
+
+Ask AI
+Authorization: Bearer YOUR_API_KEY
+API keys are created in the Cursor Dashboard. Keys are scoped to your account and grant permission to create and manage agents (subject to your plan limits and repository access).
+​
+Pricing
+The API is currently in beta with usage-based pricing. Pricing may change as we scale the service. See Background Agent pricing.
+
+## Webhooks:
+
+Webhooks
+Receive real-time notifications about background agent status changes
+
+​
+Webhooks
+When you create an agent with a webhook URL, Cursor will send HTTP POST requests to notify you about status changes. Currently, only statusChange events are supported, specifically when an agent encounters an ERROR or FINISHED state.
+​
+Webhook verification
+To ensure the webhook requests are authentically from Cursor, verify the signature included with each request:
+​
+Headers
+Each webhook request includes the following headers:
+X-Webhook-Signature – Contains the HMAC-SHA256 signature in the format sha256=<hex_digest>
+X-Webhook-ID – A unique identifier for this delivery (useful for logging)
+X-Webhook-Event – The event type (currently only statusChange)
+User-Agent – Always set to Cursor-Agent-Webhook/1.0
+​
+Signature verification
+To verify the webhook signature, compute the expected signature and compare it with the received signature:
+
+Copy
+
+Ask AI
+const crypto = require('crypto');
+
+function verifyWebhook(secret, rawBody, signature) {
+  const expectedSignature = 'sha256=' + 
+    crypto.createHmac('sha256', secret)
+          .update(rawBody)
+          .digest('hex');
+  
+  return signature === expectedSignature;
+}
+
+Copy
+
+Ask AI
+import hmac
+import hashlib
+
+def verify_webhook(secret, raw_body, signature):
+    expected_signature = 'sha256=' + hmac.new(
+        secret.encode(),
+        raw_body,
+        hashlib.sha256
+    ).hexdigest()
+    
+    return signature == expected_signature
+Always use the raw request body (before any parsing) when computing the signature.
+​
+Payload format
+The webhook payload is sent as JSON with the following structure:
+
+Copy
+
+Ask AI
+{
+  "event": "statusChange",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "id": "bc_abc123",
+  "status": "FINISHED",
+  "source": {
+    "repository": "https://github.com/your-org/your-repo",
+    "ref": "main"
+  },
+  "target": {
+    "url": "https://cursor.com/agents?id=bc_abc123",
+    "branchName": "cursor/add-readme-1234",
+    "prUrl": "https://github.com/your-org/your-repo/pull/1234"
+  },
+  "summary": "Added README.md with installation instructions"
+}
+Note that some fields are optional and will only be included when available.
+​
+Best practices
+Verify signatures – Always verify the webhook signature to ensure the request is from Cursor
+Handle retries – Webhooks may be retried if your endpoint returns an error status code
+Return quickly – Return a 2xx status code as soon as possible
+Use HTTPS – Always use HTTPS URLs for webhook endpoints in production
+Store raw payloads – Store the raw webhook payload for debugging and future verification
+
+## Raw API Endpoints:
+
+
+### Launching an Agent
+https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/launch-an-agent.md
+
+### Adding a Followup to an Already Running Agent
+https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/add-followup.md
+
+### Agent Status
+https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/agent-status.md
+
+### Agent Conversation
+https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/agent-conversation.md
+
+### List Agents
+https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/list-agents.md
+
+### Delete Agent
+https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/delete-agent.md
+
+### API Key Info
+https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/api-key-info.md
+
+### List Models
+https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/list-models.md
