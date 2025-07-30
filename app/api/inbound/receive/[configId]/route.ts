@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import { emailAgent, user, agentLaunchLog } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
+import { extractEmailAddress } from '@/lib/utils'
 
 interface CursorAgentRequest {
   prompt: {
@@ -59,11 +60,16 @@ async function createCursorAgent(config: any, prompt: string, cursorApiKey: stri
   }
 }
 
-function isEmailAllowed(senderEmail: string, allowedDomains: string[], allowedEmails: string[]): boolean {
+
+
+function isEmailAllowed(senderEmailText: string, allowedDomains: string[], allowedEmails: string[]): boolean {
   // If no restrictions are set, allow all emails
   if (allowedDomains.length === 0 && allowedEmails.length === 0) {
     return true;
   }
+
+  // Extract just the email address from formats like "Display Name" <email@domain.com>
+  const senderEmail = extractEmailAddress(senderEmailText);
 
   // Check specific email addresses
   if (allowedEmails.includes(senderEmail)) {
@@ -154,13 +160,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
         const emailAgentConfig = agentWithUser[0].agent;
         const defaultCursorApiKey = agentWithUser[0].userDefaultKey;
-        const senderEmail = email.from?.text || 'unknown@example.com';
+        const senderEmailText = email.from?.text || 'unknown@example.com';
+        const senderEmail = extractEmailAddress(senderEmailText);
 
         // Check sender permissions
         const allowedDomains = emailAgentConfig.allowedDomains ? JSON.parse(emailAgentConfig.allowedDomains) : [];
         const allowedEmails = emailAgentConfig.allowedEmails ? JSON.parse(emailAgentConfig.allowedEmails) : [];
         
-        if (!isEmailAllowed(senderEmail, allowedDomains, allowedEmails)) {
+        if (!isEmailAllowed(senderEmailText, allowedDomains, allowedEmails)) {
           console.log(`Email from ${senderEmail} rejected - not in allowed list for agent ${configId}`);
           
           await logAgentLaunch(
@@ -208,7 +215,7 @@ Email Subject: ${email.subject || 'No subject'}
 Email Content:
 ${email.cleanedContent.text || 'No content'}
 
-From: ${email.from?.text || 'Unknown sender'}
+From: ${senderEmailText || 'Unknown sender'}
 
 Please analyze this email and create appropriate code changes, documentation updates, or other relevant actions based on the content. If this appears to be a bug report, create a fix. If it's a feature request, implement the feature. If it's a question, create documentation or examples to help answer similar questions in the future.
         `.trim();

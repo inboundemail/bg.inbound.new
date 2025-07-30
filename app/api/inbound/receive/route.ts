@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isInboundWebhook } from '@inboundemail/sdk'
 import type { InboundWebhookPayload } from '@inboundemail/sdk'
+import { extractEmailAddress } from '@/lib/utils'
 
 export async function POST(request: NextRequest) {
     try {
@@ -16,9 +17,11 @@ export async function POST(request: NextRequest) {
 
         const { email } = payload
 
+
+
         // Process and log the email
         console.log('=== New Email Received ===')
-        console.log(`From: ${email.from?.text}`)
+        console.log(`From: ${email.from?.text} (extracted: ${email.from?.text ? extractEmailAddress(email.from.text) : 'none'})`)
         console.log(`To: ${email.to?.text}`)
         console.log(`Subject: ${email.subject}`)
         console.log(`Body: ${email.cleanedContent.text}`)
