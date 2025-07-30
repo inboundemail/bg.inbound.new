@@ -23,15 +23,24 @@ interface EmailAgentResult {
 export async function createEmailAgent(params: CreateEmailAgentParams): Promise<EmailAgentResult> {
   try {
     // First, create an endpoint that points to our webhook URL
-    const endpoint = await inbound.endpoints.create({
-      name: `Email Agent: ${params.name}`,
-      type: 'webhook',
-      config: {
-        url: params.webhookUrl,
-        timeout: 10000,
-        retryAttempts: 3
-      }
-    });
+    let endpoint;
+    try {
+      endpoint = await inbound.endpoints.create({
+        name: `Email Agent: ${params.name}`,
+        type: 'webhook',
+        config: {
+          url: params.webhookUrl,
+          timeout: 10,
+          retryAttempts: 3,
+        }
+      });
+      console.log('Successfully created endpoint:', endpoint.id);
+    } catch (error) {
+      console.error('Error creating endpoint:', error);
+      throw error;
+    }
+
+    
 
     // Then create the email address using the name
     const emailAddress = await inbound.emailAddresses.create({
