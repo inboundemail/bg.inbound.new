@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "clack",
-  description: "clack app (by inbound)",
+  title: "bg by inbound",
+  description: "Transform emails into code with AI-powered background agents",
 };
 
 export default function RootLayout({

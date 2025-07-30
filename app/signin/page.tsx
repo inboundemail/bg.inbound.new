@@ -97,8 +97,11 @@ export default function SignInPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Sign in</CardTitle>
+        <CardHeader className="space-y-4">
+          <div className="flex justify-center">
+            <img src="/inbound-logo-3.png" alt="bg by inbound" className="h-16 w-16 rounded-xl" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-center">Sign in to bg by inbound</CardTitle>
           <CardDescription className="text-center">
             Enter your email address and we'll send you a magic link to sign in
           </CardDescription>

@@ -274,9 +274,20 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Welcome, {session.user.name}!</h1>
-          <p className="text-gray-600 mt-2">Manage your email agents that convert emails into code changes.</p>
+        <div className="mb-8">
+          <div className="flex justify-between items-start mb-6">
+            <div className="flex items-center space-x-4">
+              <img src="/inbound-logo-3.png" alt="bg by inbound" className="h-16 w-16 rounded-xl" />
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">bg by inbound</h1>
+                <p className="text-gray-600">Welcome, {session.user.name}!</p>
+              </div>
+            </div>
+            <Button onClick={() => signOut()} variant="outline">
+              Sign Out
+            </Button>
+          </div>
+          <p className="text-center text-gray-600">Manage your email agents that convert emails into code changes.</p>
         </div>
         
         <div className="grid gap-6">
