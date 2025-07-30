@@ -65,3 +65,31 @@ export const verification = pgTable("verification", {
     () => /* @__PURE__ */ new Date(),
   ),
 });
+
+// New table for Slack connections
+export const slackConnection = pgTable("slack_connection", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  slackTeamId: text("slack_team_id").notNull(),
+  slackUserId: text("slack_user_id").notNull(),
+  slackTeamName: text("slack_team_name"),
+  slackUserName: text("slack_user_name"),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token"),
+  tokenType: text("token_type").notNull(), // 'user' or 'bot'
+  scope: text("scope").notNull(),
+  selectedChannelId: text("selected_channel_id"),
+  selectedChannelName: text("selected_channel_name"),
+  webhookId: text("webhook_id"), // UUID for the webhook
+  webhookUrl: text("webhook_url"), // Full webhook URL
+  webhookActive: boolean("webhook_active").$defaultFn(() => false),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => /* @__PURE__ */ new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
