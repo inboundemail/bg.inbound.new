@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { magicLink } from "better-auth/plugins";
+import { magicLink, mcp } from "better-auth/plugins";
 import { db } from "./db";
 import * as schema from "./schema";
 import { Resend } from "resend";
@@ -37,6 +37,9 @@ export const auth = betterAuth({
         });
       },
       expiresIn: 300, // 5 minutes (default)
+    }),
+    mcp({
+      loginPage: "/signin" // path to your login page
     })
   ],
   emailVerification: {
