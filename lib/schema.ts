@@ -78,8 +78,11 @@ export const emailAgent = pgTable("email_agent", {
   githubRepository: text("github_repository").notNull(),
   githubRef: text("github_ref").notNull().$default(() => "main"),
   cursorApiKey: text("cursor_api_key"), // Now optional - can use account default
-  model: text("model").notNull().$default(() => "claude-4-sonnet-thinking"),
+  model: text("model").$default(() => "claude-3.5-sonnet"),
   autoCreatePr: boolean("auto_create_pr").$default(() => false).notNull(),
+  branchName: text("branch_name"), // Optional custom branch name pattern
+  webhookUrl: text("webhook_url"), // Optional webhook URL for status updates
+  webhookSecret: text("webhook_secret"), // Optional webhook secret for verification
   isActive: boolean("is_active").$default(() => true).notNull(),
   // Sender permissions
   allowedDomains: text("allowed_domains"), // JSON array of allowed domains (e.g., ["@company.com", "@gmail.com"])

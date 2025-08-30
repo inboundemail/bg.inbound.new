@@ -10,32 +10,65 @@ import { extractEmailAddress } from '@/lib/utils'
 interface CursorAgentRequest {
   prompt: {
     text: string;
+    images?: Array<{
+      data: string;
+      dimension?: {
+        width: number;
+        height: number;
+      };
+    }>;
   };
-  model: string;
+  model?: string;
   source: {
     repository: string;
-    ref: string;
+    ref?: string;
   };
-  target: {
-    autoCreatePr: boolean;
+  target?: {
+    autoCreatePr?: boolean;
+    branchName?: string;
+  };
+  webhook?: {
+    url: string;
+    secret?: string;
   };
 }
 
 async function createCursorAgent(config: any, prompt: string, cursorApiKey: string): Promise<string | null> {
   try {
+    // Prepare the request according to the new API structure
     const agentRequest: CursorAgentRequest = {
       prompt: {
         text: prompt
       },
-      model: config.model,
       source: {
         repository: config.githubRepository,
-        ref: config.githubRef
-      },
-      target: {
-        autoCreatePr: config.autoCreatePr
+        ref: config.githubRef || 'main'
       }
     };
+
+    // Add optional fields if they exist
+    if (config.model) {
+      agentRequest.model = config.model;
+    }
+
+    if (config.autoCreatePr !== undefined || config.branchName) {
+      agentRequest.target = {
+        autoCreatePr: config.autoCreatePr !== undefined ? config.autoCreatePr : false
+      };
+      if (config.branchName) {
+        agentRequest.target.branchName = config.branchName;
+      }
+    }
+
+    // Add webhook if configured
+    if (config.webhookUrl) {
+      agentRequest.webhook = {
+        url: config.webhookUrl,
+        secret: config.webhookSecret
+      };
+    }
+
+    console.log('Creating Cursor agent with request:', JSON.stringify(agentRequest, null, 2));
 
     const response = await fetch('https://api.cursor.com/v0/agents', {
       method: 'POST',
@@ -49,10 +82,24 @@ async function createCursorAgent(config: any, prompt: string, cursorApiKey: stri
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Cursor API error:', response.status, errorText);
+      
+      // Try to parse error response for more details
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.error('Cursor API error details:', errorJson);
+        if (errorJson.error?.message) {
+          console.error('Error message:', errorJson.error.message);
+        }
+      } catch (e) {
+        // If not JSON, just log the text
+        console.error('Raw error response:', errorText);
+      }
+      
       return null;
     }
 
     const result = await response.json();
+    console.log('Cursor agent created successfully:', result);
     return result.id;
   } catch (error) {
     console.error('Error creating Cursor agent:', error);
