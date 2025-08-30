@@ -5,7 +5,9 @@ import { db } from "./db";
 import * as schema from "./schema";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend only if API key is available
+// During build time, this might not be available
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -21,6 +23,10 @@ export const auth = betterAuth({
   plugins: [
     magicLink({
       sendMagicLink: async ({ email, token, url }, request) => {
+        if (!resend) {
+          console.error('Resend API key not configured');
+          throw new Error('Email service not configured');
+        }
         await resend.emails.send({
           from: "noreply@inbound.new",
           to: email,
@@ -46,6 +52,10 @@ export const auth = betterAuth({
     sendVerificationEmail: async (data, request) => {
       const { user, url, token } = data;
       
+      if (!resend) {
+        console.error('Resend API key not configured');
+        throw new Error('Email service not configured');
+      }
       await resend.emails.send({
         from: "noreply@inbound.new",
         to: user.email,

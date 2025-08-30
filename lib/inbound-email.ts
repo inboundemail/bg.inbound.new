@@ -1,12 +1,19 @@
 import { Inbound } from '@inboundemail/sdk'
 
-if (!process.env.INBOUND_API_KEY) {
-  throw new Error('INBOUND_API_KEY environment variable is required')
-}
+// Lazy initialize the Inbound client to avoid build-time errors
+let inbound: Inbound | null = null;
 
-const inbound = new Inbound({
-  apiKey: process.env.INBOUND_API_KEY,
-})
+function getInboundClient(): Inbound {
+  if (!inbound) {
+    if (!process.env.INBOUND_API_KEY) {
+      throw new Error('INBOUND_API_KEY environment variable is required');
+    }
+    inbound = new Inbound({
+      apiKey: process.env.INBOUND_API_KEY,
+    });
+  }
+  return inbound;
+}
 
 interface CreateEmailAgentParams {
   name: string;
@@ -25,7 +32,7 @@ export async function createEmailAgent(params: CreateEmailAgentParams): Promise<
     // First, create an endpoint that points to our webhook URL
     let endpoint;
     try {
-      endpoint = await inbound.endpoints.create({
+      endpoint = await getInboundClient().endpoints.create({
         name: `Email Agent: ${params.name}`,
         type: 'webhook',
         config: {
@@ -43,7 +50,7 @@ export async function createEmailAgent(params: CreateEmailAgentParams): Promise<
     
 
     // Then create the email address using the name
-    const emailAddress = await inbound.emailAddresses.create({
+    const emailAddress = await getInboundClient().emailAddresses.create({
       address: `${params.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}@bg.inbound.new`,
       domainId: process.env.INBOUND_DOMAIN_ID!, // You'll need to set this
       endpointId: endpoint.id,
@@ -65,12 +72,12 @@ export async function deleteEmailAgent(endpointId: string, emailAddressId: strin
   try {
     // Delete the email address first
     if (emailAddressId) {
-      await inbound.emailAddresses.delete(emailAddressId);
+      await getInboundClient().emailAddresses.delete(emailAddressId);
     }
     
     // Then delete the endpoint
     if (endpointId) {
-      await inbound.endpoints.delete(endpointId);
+      await getInboundClient().endpoints.delete(endpointId);
     }
   } catch (error) {
     console.error('Error deleting email agent:', error);
@@ -81,7 +88,7 @@ export async function deleteEmailAgent(endpointId: string, emailAddressId: strin
 export async function updateEmailAgentStatus(emailAddressId: string, isActive: boolean): Promise<void> {
   try {
     if (emailAddressId) {
-      await inbound.emailAddresses.update(emailAddressId, {
+      await getInboundClient().emailAddresses.update(emailAddressId, {
         isActive
       });
     }
@@ -91,4 +98,4 @@ export async function updateEmailAgentStatus(emailAddressId: string, isActive: b
   }
 }
 
-export { inbound };
+export { getInboundClient as inbound };
