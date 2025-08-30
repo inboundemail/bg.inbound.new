@@ -10,14 +10,26 @@ import { eq } from "drizzle-orm";
 interface CursorAgentRequest {
     prompt: {
         text: string;
+        images?: Array<{
+            data: string;
+            dimension?: {
+                width: number;
+                height: number;
+            };
+        }>;
     };
-    model: string;
+    model?: string;
     source: {
         repository: string;
-        ref: string;
+        ref?: string;
     };
-    target: {
-        autoCreatePr: boolean;
+    target?: {
+        autoCreatePr?: boolean;
+        branchName?: string;
+    };
+    webhook?: {
+        url: string;
+        secret?: string;
     };
 }
 
@@ -84,7 +96,7 @@ const handler = withMcpAuth(auth, async (req: Request) => {
                     prompt: z.string().describe("Detailed instructions for what the agent should accomplish"),
                     repository: z.string().describe("GitHub repository URL (e.g., 'https://github.com/user/repo')"),
                     ref: z.string().optional().default("main").describe("Git branch/ref to work from"),
-                    model: z.string().optional().default("claude-4-sonnet").describe("AI model to use"),
+                    model: z.string().optional().describe("AI model to use (e.g., 'claude-3.5-sonnet', 'gpt-4-turbo')"),
                     autoCreatePr: z.boolean().optional().default(true).describe("Whether to automatically create a PR when complete"),
                 },
                 async ({ prompt, repository, ref, model, autoCreatePr }) => {
@@ -101,15 +113,22 @@ const handler = withMcpAuth(auth, async (req: Request) => {
 
                         const agentRequest: CursorAgentRequest = {
                             prompt: { text: prompt },
-                            model: model || "claude-3.5-sonnet",
                             source: {
                                 repository,
                                 ref: ref || "main"
-                            },
-                            target: {
-                                autoCreatePr: autoCreatePr ?? true
                             }
                         };
+
+                        // Add optional fields
+                        if (model) {
+                            agentRequest.model = model;
+                        }
+
+                        if (autoCreatePr !== undefined) {
+                            agentRequest.target = {
+                                autoCreatePr: autoCreatePr
+                            };
+                        }
 
                         const response = await fetch('https://api.cursor.com/v0/agents', {
                             method: 'POST',

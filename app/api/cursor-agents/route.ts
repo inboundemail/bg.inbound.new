@@ -45,14 +45,28 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      console.error('Cursor API error:', response.status, response.statusText);
+      const errorText = await response.text();
+      console.error('Cursor API error:', response.status, errorText);
+      
+      // Try to parse error for more details
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.error('Cursor API error details:', errorJson);
+      } catch (e) {
+        console.error('Raw error response:', errorText);
+      }
+      
       return NextResponse.json({ activeAgents: [] });
     }
 
     const data = await response.json();
     
-    // Filter only running agents
-    const activeAgents = data.agents?.filter((agent: any) => agent.status === 'RUNNING') || [];
+    // Filter only running agents - check for different status formats
+    const activeAgents = data.agents?.filter((agent: any) => 
+      agent.status === 'RUNNING' || 
+      agent.status === 'CREATING' || 
+      agent.status === 'IN_PROGRESS'
+    ) || [];
 
     return NextResponse.json({ activeAgents });
   } catch (error) {
