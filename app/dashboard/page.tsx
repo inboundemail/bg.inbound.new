@@ -346,22 +346,22 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto relative">
         <div className="mb-8">
           <div className="flex justify-between items-start mb-6">
             <div className="flex items-center space-x-4">
-              <img src="/inbound-logo-3.png" alt="bg by inbound" className="h-16 w-16 rounded-xl" />
+              <img src="/inbound-logo.svg" alt="bg by inbound" className="h-16 w-16 rounded-xl" />
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">bg by inbound</h1>
-                <p className="text-gray-600">Welcome, {session.user.name}!</p>
+                <h1 className="text-3xl font-bold text-foreground">bg by inbound</h1>
+                <p className="text-muted-foreground">Welcome, {session.user.name}!</p>
               </div>
             </div>
-            <Button onClick={() => signOut()} variant="outline">
+            <Button onClick={() => signOut()} variant="secondary">
               Sign Out
             </Button>
           </div>
-          <p className="text-center text-gray-600">Manage your email agents that convert emails into code changes.</p>
+          <p className="text-center text-muted-foreground">Manage your email agents that convert emails into code changes.</p>
         </div>
 
         {/* Navigation Menu */}
@@ -371,7 +371,7 @@ export default function DashboardPage() {
               <button
                 key={item.id}
                 onClick={() => scrollToCard(item.id)}
-                className="block text-left text-gray-500 hover:text-gray-700 transition-colors duration-150 text-sm whitespace-nowrap"
+                className="block text-left text-muted-foreground hover:text-foreground transition-colors duration-150 text-sm whitespace-nowrap"
               >
                 {item.label}
               </button>
@@ -389,12 +389,12 @@ export default function DashboardPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700">Email:</p>
-                  <p className="text-sm text-gray-600">{session.user.email}</p>
+                  <p className="text-sm font-medium text-foreground">Email:</p>
+                  <p className="text-sm text-muted-foreground">{session.user.email}</p>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700">Member Since:</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm font-medium text-foreground">Member Since:</p>
+                  <p className="text-sm text-muted-foreground">
                     {new Date(session.user.createdAt).toLocaleDateString()}
                   </p>
                 </div>
@@ -404,8 +404,8 @@ export default function DashboardPage() {
               <div className="pt-4 border-t space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Default Cursor API Key</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-medium text-foreground">Default Cursor API Key</p>
+                    <p className="text-xs text-muted-foreground">
                       {hasDefaultKey ? 'Set as default for all new agents' : 'Not configured'}
                     </p>
                   </div>
@@ -414,16 +414,15 @@ export default function DashboardPage() {
                       <>
                         <Button
                           onClick={() => setShowKeyForm(!showKeyForm)}
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                         >
                           Update
                         </Button>
                         <Button
                           onClick={handleRemoveDefaultKey}
-                          variant="outline"
+                          variant="destructive"
                           size="sm"
-                          className="text-red-600 hover:text-red-800"
                         >
                           Remove
                         </Button>
@@ -431,7 +430,7 @@ export default function DashboardPage() {
                     ) : (
                       <Button
                         onClick={() => setShowKeyForm(!showKeyForm)}
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                       >
                         Set Default
@@ -441,7 +440,7 @@ export default function DashboardPage() {
                 </div>
 
                 {showKeyForm && (
-                  <form onSubmit={handleSaveDefaultKey} className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                  <form onSubmit={handleSaveDefaultKey} className="space-y-3 p-3 bg-card rounded-lg">
                     <div className="space-y-2">
                       <Label htmlFor="defaultKey">Cursor API Key</Label>
                       <Input
@@ -452,7 +451,7 @@ export default function DashboardPage() {
                         placeholder="Enter your Cursor API key"
                         required
                       />
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         This will be used as the default for all new email agents.{' '}
                         <a href="https://cursor.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                           Get your API key
@@ -469,7 +468,7 @@ export default function DashboardPage() {
                           setShowKeyForm(false);
                           setDefaultKeyInput('');
                         }}
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                       >
                         Cancel
@@ -482,7 +481,7 @@ export default function DashboardPage() {
               <div className="pt-4 border-t">
                 <Button
                   onClick={handleSignOut}
-                  variant="outline"
+                  variant="secondary"
                   className="w-full"
                 >
                   Sign Out
@@ -507,7 +506,7 @@ export default function DashboardPage() {
             <CardContent>
               {/* Create Form */}
               {showCreateForm && (
-                <form onSubmit={handleCreateEmailAgent} className="space-y-4 mb-6 p-4 border rounded-lg bg-gray-50">
+                <form onSubmit={handleCreateEmailAgent} className="space-y-4 mb-6 p-4 border rounded-lg bg-card">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Agent Name</Label>
@@ -519,7 +518,7 @@ export default function DashboardPage() {
                         placeholder="support-bot"
                         required
                       />
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Will create email: <code>{formData.name || 'your-name'}@bg.inbound.new</code>
                       </p>
                     </div>
@@ -550,7 +549,7 @@ export default function DashboardPage() {
                         id="model"
                         value={formData.model}
                         onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                        className="w-full p-2 border border-gray-300 rounded-md"
+                        className="w-full p-2 border border-input bg-background text-foreground rounded-md"
                       >
                         <option value="claude-4-sonnet-thinking">Claude 4 Sonnet (Thinking)</option>
                         <option value="gpt-4">GPT-4</option>
@@ -560,7 +559,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cursorApiKey">
-                      Cursor API Key {hasDefaultKey && <span className="text-gray-500">(optional)</span>}
+                      Cursor API Key {hasDefaultKey && <span className="text-muted-foreground">(optional)</span>}
                     </Label>
                     <Input
                       id="cursorApiKey"
@@ -570,7 +569,7 @@ export default function DashboardPage() {
                       placeholder={hasDefaultKey ? "Leave blank to use account default" : "Your Cursor API key"}
                       required={!hasDefaultKey}
                     />
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {hasDefaultKey ? (
                         'Leave blank to use your account default, or enter a specific key for this agent'
                       ) : (
@@ -593,7 +592,7 @@ export default function DashboardPage() {
                         onChange={(e) => setFormData({ ...formData, allowedDomains: e.target.value })}
                         placeholder="@company.com, @gmail.com"
                       />
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Comma-separated domains. Leave blank to allow all.
                       </p>
                     </div>
@@ -606,7 +605,7 @@ export default function DashboardPage() {
                         onChange={(e) => setFormData({ ...formData, allowedEmails: e.target.value })}
                         placeholder="user@company.com, admin@site.com"
                       />
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Comma-separated specific email addresses.
                       </p>
                     </div>
@@ -621,7 +620,7 @@ export default function DashboardPage() {
                     />
                     <Label htmlFor="autoCreatePr">Auto-create Pull Requests</Label>
                   </div>
-                  <Button type="submit" disabled={isLoading} className="w-full">
+                  <Button variant="primary" type="submit" disabled={isLoading} className="w-full">
                     {isLoading ? 'Creating Email Agent...' : 'Create Email Agent'}
                   </Button>
                 </form>
@@ -637,16 +636,15 @@ export default function DashboardPage() {
                         <span className={`w-2 h-2 rounded-full ${agent.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></span>
                         <Button
                           onClick={() => toggleEmailAgentStatus(agent.id, agent.isActive)}
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                         >
                           {agent.isActive ? 'Disable' : 'Enable'}
                         </Button>
                         <Button
                           onClick={() => deleteEmailAgent(agent.id)}
-                          variant="outline"
+                          variant="destructive"
                           size="sm"
-                          className="text-red-600 hover:text-red-800"
                         >
                           Delete
                         </Button>
@@ -659,14 +657,14 @@ export default function DashboardPage() {
                       </div>
                       <Button 
                         onClick={() => copyEmailAddress(agent.emailAddress)} 
-                        variant="outline" 
+                        variant="secondary" 
                         size="sm"
                       >
                         Copy
                       </Button>
                     </div>
 
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       <span>{agent.githubRepository.replace('https://github.com/', '')}</span>
                       <span>•</span>
                       <span>{agent.githubRef}</span>
@@ -682,7 +680,7 @@ export default function DashboardPage() {
                   </div>
                 ))}
                 {emailAgents.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     <p>No email agents yet.</p>
                     <p>Create your first email agent to start converting emails to code!</p>
                   </div>
@@ -710,8 +708,8 @@ export default function DashboardPage() {
                       <div className="flex items-center space-x-2">
                         <span className="w-2 h-2 rounded-full bg-green-500"></span>
                         <span className="font-semibold text-sm">{agent.status}</span>
-                        <span className="text-xs text-gray-500">•</span>
-                        <span className="text-xs text-gray-500">{agent.id}</span>
+                        <span className="text-xs text-muted-foreground">•</span>
+                        <span className="text-xs text-muted-foreground">{agent.id}</span>
                       </div>
                       {agent.target.prUrl && (
                         <a 
@@ -726,12 +724,12 @@ export default function DashboardPage() {
                     </div>
                     
                     <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-900">{agent.name || agent.summary || 'Agent working...'}</p>
+                      <p className="text-sm font-medium text-foreground">{agent.name || agent.summary || 'Agent working...'}</p>
                       {agent.summary && agent.name && (
-                        <p className="text-xs text-gray-600">{agent.summary}</p>
+                        <p className="text-xs text-muted-foreground">{agent.summary}</p>
                       )}
                       
-                      <div className="flex flex-wrap gap-4 text-xs text-gray-600">
+                      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                         <span>{agent.source.repository.replace('https://github.com/', '')}</span>
                         <span>•</span>
                         <span>{agent.source.ref} → {agent.target.branchName}</span>
@@ -757,7 +755,7 @@ export default function DashboardPage() {
                   </div>
                 ))}
                 {cursorAgents.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     <p>No active background agents.</p>
                     <p>Send an email to trigger a new agent!</p>
                   </div>
@@ -783,11 +781,11 @@ export default function DashboardPage() {
                           log.status === 'rejected' ? 'bg-yellow-500' : 'bg-red-500'
                         }`}></span>
                         <span className="font-medium text-sm">{log.agentName || 'Unknown Agent'}</span>
-                        <span className="text-xs text-gray-500">•</span>
-                        <span className="text-xs text-gray-500">{log.senderEmail}</span>
+                        <span className="text-xs text-muted-foreground">•</span>
+                        <span className="text-xs text-muted-foreground">{log.senderEmail}</span>
                       </div>
                       {log.emailSubject && (
-                        <p className="text-sm text-gray-600 mb-1">{log.emailSubject}</p>
+                        <p className="text-sm text-muted-foreground mb-1">{log.emailSubject}</p>
                       )}
                       {log.errorMessage && (
                         <p className="text-xs text-red-600">{log.errorMessage}</p>
@@ -803,14 +801,14 @@ export default function DashboardPage() {
                       }`}>
                         {log.status}
                       </span>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {new Date(log.createdAt).toLocaleString()}
                       </p>
                     </div>
                   </div>
                 ))}
                 {agentLogs.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     <p>No agent launches yet.</p>
                     <p>Send an email to one of your agents to see logs here!</p>
                   </div>

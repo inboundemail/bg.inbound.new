@@ -1,59 +1,61 @@
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "appearance-none inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl dark:rounded-xl font-medium relative cursor-pointer select-none touch-manipulation vertical-align-middle border box-border transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+        primary:
+          // Light mode
+          "bg-[var(--button-primary-bg)] text-white border-none disabled:cursor-default disabled:opacity-60 shadow-[0_-1px_1.25px_0_var(--button-primary-shadow-top)_inset,1px_1.25px_2.3px_0_var(--button-primary-shadow-bottom)_inset] hover:brightness-105 active:brightness-95 focus-visible:ring-primary/50 dark:bg-[#4a0198] dark:text-white dark:shadow-[1px_1.25px_2.3px_0px_inset_rgba(255,255,255,0.1)] dark:hover:bg-[#5201a8] dark:active:bg-[#3e017f]",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
+          // Light mode
+          "bg-[#2A0B35] text-foreground border border-[#FFFFFF/20] disabled:cursor-default disabled:opacity-60 hover:bg-accent active:bg-accent/80 focus-visible:ring-primary/50 dark:bg-[#2a0b35] dark:text-white dark:border dark:border-white/10 dark:rounded-xl dark:shadow-[1px_1.25px_2.3px_0px_inset_rgba(255,255,255,0.08)] dark:hover:bg-[#321142] dark:active:bg-[#220b2b]",
+        outline:
+          // Light mode
+          "border border-border bg-transparent text-foreground disabled:cursor-default disabled:opacity-60 hover:bg-accent hover:text-accent-foreground active:bg-accent/90 focus-visible:ring-border dark:border dark:border-border dark:bg-background dark:text-foreground dark:shadow-[0_4px_12px_rgba(0,0,0,0.1),inset_0_-1px_0.5px_1px_rgba(0,0,0,0.05),inset_0_1px_0.5px_1px_rgba(255,255,255,0.1)] dark:hover:bg-accent dark:hover:text-accent-foreground dark:active:bg-accent/90",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-transparent text-foreground disabled:cursor-default shadow-none border-none disabled:opacity-60 hover:bg-accent/50 hover:text-accent-foreground hover:shadow-[0_4px_12px_rgba(0,0,0,0.1),inset_0_-1px_0.5px_1px_rgba(0,0,0,0.05),inset_0_1px_0.5px_1px_rgba(255,255,255,0.1)] active:bg-accent/90 active:shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_2px_rgba(0,0,0,0.1)] focus-visible:ring-accent",
+        destructive:
+          // Light mode
+          "bg-[#7F1D1D] text-white border border-[#7F1D1D/20] disabled:cursor-default disabled:opacity-60 hover:bg-[#601515] active:bg-[rgba(255,237,237,0.8)] focus-visible:ring-destructive/50 dark:bg-[rgba(109,29,29,0.4)] dark:text-[#ffb9ba] dark:border dark:border-white/10 dark:rounded-xl dark:shadow-[1px_1.25px_2.3px_0px_inset_rgba(255,255,255,0.08)] dark:hover:bg-[rgba(109,29,29,0.55)] dark:active:bg-[rgba(109,29,29,0.35)]",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
+        default: "text-sm leading-5 px-4 py-2",
+        sm: "text-xs leading-4 px-3 py-1",
+        lg: "text-base leading-6 px-6 py-2",
+        icon: "h-9 w-9",
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "primary",
       size: "default",
     },
   }
-)
+);
 
-function Button({
-  className,
-  variant,
-  size,
-  asChild = false,
-  ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
-  const Comp = asChild ? Slot : "button"
-
-  return (
-    <Comp
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
-  )
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
 }
 
-export { Button, buttonVariants }
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };
