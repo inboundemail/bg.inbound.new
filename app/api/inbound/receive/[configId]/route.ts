@@ -7,6 +7,7 @@ import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { extractEmailAddress } from '@/lib/utils'
 
+// Updated to match official API spec
 interface CursorAgentRequest {
   prompt: {
     text: string;

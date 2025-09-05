@@ -1,77 +1,87 @@
----
-description:
-globs:
-alwaysApply: false
----
+# Overview
 
+> Programmatically create and manage background agents that work on your repositories
 
-# This is the API and Documentation for the Cursor Background Agents
+# Background Agents API
 
-Overview
-Programmatically create and manage background agents that work on your repositories
+<Badge variant="beta">Beta</Badge>
 
-​
-Background Agent API
-The Background Agent API allows you to programmatically create and manage AI-powered coding agents that work autonomously on your repositories. You can use the API to automatically respond to user feedback, fix bugs, update docs, and much more!
-​
-Key features
-Autonomous code generation - Create agents that can understand your prompt and make changes to your codebase
-Repository integration - Work directly with GitHub repositories
-Follow-up prompts - Add additional instructions to running agents
-Usage-based pricing - Pay only for the tokens you use
-Scalable - Support for up to 256 active agents per API key
-​
-Quick start
-​
-1. Get your API key
-Navigate to Cursor Dashboard → Background Agents → API Keys to create your API key.
-​
-2. Start using the API
+The Background Agents API allows you to programmatically create and manage AI-powered coding agents that work autonomously on your repositories.
+You can use the API to automatically respond to user feedback, fix bugs, update docs, and much more!
+
+<Info>
+  Background Agents API is currently in beta, we'd love your feedback on it!
+</Info>
+
+## Key features
+
+* **Autonomous code generation** - Create agents that can understand your prompt and make changes to your codebase
+* **Repository integration** - Work directly with GitHub repositories
+* Follow-up prompts - Add additional instructions to running agents
+* **Usage-based pricing** - Pay only for the tokens you use
+* **Scalable** - Support for up to 256 active agents per API key
+
+## Quick start
+
+### 1. Get your API key
+
+**Navigate** to [Cursor Dashboard → Integrations](https://cursor.com/dashboard?tab=integrations) to create your API key.
+
+### 2. Start using the API
+
 All API endpoints are relative to:
 
-Copy
-
-Ask AI
+```
 https://api.cursor.com
-See the API reference for a detailed list of endpoints.
-​
-Authentication
+```
+
+See the [API reference](/en/background-agent/api/launch-an-agent) for a detailed list of endpoints.
+
+## Authentication
+
 All API requests require authentication using a Bearer token:
 
-Copy
-
-Ask AI
+```
 Authorization: Bearer YOUR_API_KEY
-API keys are created in the Cursor Dashboard. Keys are scoped to your account and grant permission to create and manage agents (subject to your plan limits and repository access).
-​
-Pricing
-The API is currently in beta with usage-based pricing. Pricing may change as we scale the service. See Background Agent pricing.
+```
 
-## Webhooks:
+API keys are created in the [Cursor Dashboard](https://cursor.com/dashboard?tab=integrations). Keys are scoped to your account and grant permission to create and manage agents (subject to your plan limits and repository access).
 
-Webhooks
-Receive real-time notifications about background agent status changes
+## Pricing
 
-​
-Webhooks
-When you create an agent with a webhook URL, Cursor will send HTTP POST requests to notify you about status changes. Currently, only statusChange events are supported, specifically when an agent encounters an ERROR or FINISHED state.
-​
-Webhook verification
+The API is currently in beta with the same pricing as Background Agents. Pricing may change as we scale the service. See [Background Agent pricing](/en/account/pricing#background-agent).
+
+## Next steps
+
+* Read the main [Background Agents overview](/en/background-agent) to understand environments, permissions, and workflows.
+* Try Background Agents from [web & mobile](/en/background-agent/web-and-mobile).
+* Join the discussion in [Discord #background-agent](https://discord.gg/jfgpZtYpmb) or email [background-agent-feedback@cursor.com](mailto:background-agent-feedback@cursor.com).
+# Webhooks
+
+> Receive real-time notifications about background agent status changes
+
+# Webhooks
+
+When you create an agent with a webhook URL, Cursor will send HTTP POST requests to notify you about status changes. Currently, only `statusChange` events are supported, specifically when an agent encounters an `ERROR` or `FINISHED` state.
+
+## Webhook verification
+
 To ensure the webhook requests are authentically from Cursor, verify the signature included with each request:
-​
-Headers
+
+### Headers
+
 Each webhook request includes the following headers:
-X-Webhook-Signature – Contains the HMAC-SHA256 signature in the format sha256=<hex_digest>
-X-Webhook-ID – A unique identifier for this delivery (useful for logging)
-X-Webhook-Event – The event type (currently only statusChange)
-User-Agent – Always set to Cursor-Agent-Webhook/1.0
-​
-Signature verification
+
+* **`X-Webhook-Signature`** – Contains the HMAC-SHA256 signature in the format `sha256=<hex_digest>`
+* **`X-Webhook-ID`** – A unique identifier for this delivery (useful for logging)
+* **`X-Webhook-Event`** – The event type (currently only `statusChange`)
+* **`User-Agent`** – Always set to `Cursor-Agent-Webhook/1.0`
+
+### Signature verification
+
 To verify the webhook signature, compute the expected signature and compare it with the received signature:
 
-Copy
-
-Ask AI
+```javascript
 const crypto = require('crypto');
 
 function verifyWebhook(secret, rawBody, signature) {
@@ -82,10 +92,9 @@ function verifyWebhook(secret, rawBody, signature) {
   
   return signature === expectedSignature;
 }
+```
 
-Copy
-
-Ask AI
+```python
 import hmac
 import hashlib
 
@@ -97,14 +106,15 @@ def verify_webhook(secret, raw_body, signature):
     ).hexdigest()
     
     return signature == expected_signature
+```
+
 Always use the raw request body (before any parsing) when computing the signature.
-​
-Payload format
+
+## Payload format
+
 The webhook payload is sent as JSON with the following structure:
 
-Copy
-
-Ask AI
+```json
 {
   "event": "statusChange",
   "timestamp": "2024-01-15T10:30:00Z",
@@ -121,38 +131,1875 @@ Ask AI
   },
   "summary": "Added README.md with installation instructions"
 }
+```
+
 Note that some fields are optional and will only be included when available.
-​
-Best practices
-Verify signatures – Always verify the webhook signature to ensure the request is from Cursor
-Handle retries – Webhooks may be retried if your endpoint returns an error status code
-Return quickly – Return a 2xx status code as soon as possible
-Use HTTPS – Always use HTTPS URLs for webhook endpoints in production
-Store raw payloads – Store the raw webhook payload for debugging and future verification
 
-## Raw API Endpoints:
+## Best practices
 
+* **Verify signatures** – Always verify the webhook signature to ensure the request is from Cursor
+* **Handle retries** – Webhooks may be retried if your endpoint returns an error status code
+* **Return quickly** – Return a 2xx status code as soon as possible
+* **Use HTTPS** – Always use HTTPS URLs for webhook endpoints in production
+* **Store raw payloads** – Store the raw webhook payload for debugging and future verification
+# List Agents
 
-### Launching an Agent
-https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/launch-an-agent.md
+> Retrieve a paginated list of all background agents for the authenticated user.
 
-### Adding a Followup to an Already Running Agent
-https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/add-followup.md
+## OpenAPI
 
-### Agent Status
-https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/agent-status.md
+````yaml en/background-agent/api/openapi.yaml get /v0/agents
+paths:
+  path: /v0/agents
+  method: get
+  servers:
+    - url: https://api.cursor.com
+      description: Production server
+  request:
+    security:
+      - title: bearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: API key from Cursor Dashboard
+          cookie: {}
+    parameters:
+      path: {}
+      query:
+        limit:
+          schema:
+            - type: integer
+              required: false
+              description: Number of background agents to return
+              maximum: 100
+              minimum: 1
+              default: 20
+        cursor:
+          schema:
+            - type: string
+              required: false
+              description: Pagination cursor from the previous response
+              minLength: 1
+              example: bc_xyz789
+      header: {}
+      cookie: {}
+    body: {}
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              agents:
+                allOf:
+                  - type: array
+                    description: List of agents
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - name
+                        - status
+                        - source
+                        - target
+                        - createdAt
+                      properties:
+                        id:
+                          type: string
+                          description: Unique identifier for the background agent
+                          example: bc_abc123
+                        name:
+                          type: string
+                          description: Name for the agent
+                          example: Add README Documentation
+                        status:
+                          type: string
+                          enum:
+                            - RUNNING
+                            - FINISHED
+                            - ERROR
+                            - CREATING
+                            - EXPIRED
+                          description: Current status of the background agent
+                          example: RUNNING
+                        source:
+                          type: object
+                          properties:
+                            repository:
+                              type: string
+                              description: The GitHub repository URL
+                              example: https://github.com/your-org/your-repo
+                            ref:
+                              type: string
+                              description: Git ref (branch/tag) used as the base branch
+                              example: main
+                        target:
+                          type: object
+                          required:
+                            - url
+                          properties:
+                            branchName:
+                              type: string
+                              description: The Git branch name where the agent is working
+                              example: cursor/add-readme-1234
+                            url:
+                              type: string
+                              description: URL to view the agent in Cursor Web
+                              example: https://cursor.com/agents?id=bc_abc123
+                            prUrl:
+                              type: string
+                              description: URL to view the pull request in GitHub, if any
+                              example: https://github.com/your-org/your-repo/pull/1234
+                            autoCreatePr:
+                              type: boolean
+                              description: >-
+                                Whether a pull request will be automatically
+                                created
+                              example: false
+                        summary:
+                          type: string
+                          description: Summary of the agent's work
+                          example: >-
+                            Added README.md with installation instructions and
+                            usage examples
+                        createdAt:
+                          type: string
+                          format: date-time
+                          description: When the agent was created
+                          example: '2024-01-15T10:30:00Z'
+              nextCursor:
+                allOf:
+                  - type: string
+                    description: Cursor for fetching the next page of results
+                    example: bc_def456
+            requiredProperties:
+              - agents
+        examples:
+          example:
+            value:
+              agents:
+                - id: bc_abc123
+                  name: Add README Documentation
+                  status: RUNNING
+                  source:
+                    repository: https://github.com/your-org/your-repo
+                    ref: main
+                  target:
+                    branchName: cursor/add-readme-1234
+                    url: https://cursor.com/agents?id=bc_abc123
+                    prUrl: https://github.com/your-org/your-repo/pull/1234
+                    autoCreatePr: false
+                  summary: >-
+                    Added README.md with installation instructions and usage
+                    examples
+                  createdAt: '2024-01-15T10:30:00Z'
+              nextCursor: bc_def456
+        description: Agents retrieved successfully
+    '400':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - &ref_0
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: Human-readable error message
+                      code:
+                        type: string
+                        description: Machine-readable error code
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Invalid request - bad query parameters
+    '401':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Unauthorized - invalid or missing API key
+    '403':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Forbidden - insufficient permissions
+    '429':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Rate limit exceeded
+    '500':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Internal server error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
 
-### Agent Conversation
-https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/agent-conversation.md
+````# Agent Status
 
-### List Agents
-https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/list-agents.md
+> Get the current status and results of a specific background agent.
 
-### Delete Agent
-https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/delete-agent.md
+## OpenAPI
 
-### API Key Info
-https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/api-key-info.md
+````yaml en/background-agent/api/openapi.yaml get /v0/agents/{id}
+paths:
+  path: /v0/agents/{id}
+  method: get
+  servers:
+    - url: https://api.cursor.com
+      description: Production server
+  request:
+    security:
+      - title: bearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: API key from Cursor Dashboard
+          cookie: {}
+    parameters:
+      path:
+        id:
+          schema:
+            - type: string
+              required: true
+              description: Unique identifier for the background agent
+              example: bc_abc123
+      query: {}
+      header: {}
+      cookie: {}
+    body: {}
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              id:
+                allOf:
+                  - type: string
+                    description: Unique identifier for the background agent
+                    example: bc_abc123
+              name:
+                allOf:
+                  - type: string
+                    description: Name for the agent
+                    example: Add README Documentation
+              status:
+                allOf:
+                  - type: string
+                    enum:
+                      - RUNNING
+                      - FINISHED
+                      - ERROR
+                      - CREATING
+                      - EXPIRED
+                    description: Current status of the background agent
+                    example: RUNNING
+              source:
+                allOf:
+                  - type: object
+                    properties:
+                      repository:
+                        type: string
+                        description: The GitHub repository URL
+                        example: https://github.com/your-org/your-repo
+                      ref:
+                        type: string
+                        description: Git ref (branch/tag) used as the base branch
+                        example: main
+              target:
+                allOf:
+                  - type: object
+                    required:
+                      - url
+                    properties:
+                      branchName:
+                        type: string
+                        description: The Git branch name where the agent is working
+                        example: cursor/add-readme-1234
+                      url:
+                        type: string
+                        description: URL to view the agent in Cursor Web
+                        example: https://cursor.com/agents?id=bc_abc123
+                      prUrl:
+                        type: string
+                        description: URL to view the pull request in GitHub, if any
+                        example: https://github.com/your-org/your-repo/pull/1234
+                      autoCreatePr:
+                        type: boolean
+                        description: Whether a pull request will be automatically created
+                        example: false
+              summary:
+                allOf:
+                  - type: string
+                    description: Summary of the agent's work
+                    example: >-
+                      Added README.md with installation instructions and usage
+                      examples
+              createdAt:
+                allOf:
+                  - type: string
+                    format: date-time
+                    description: When the agent was created
+                    example: '2024-01-15T10:30:00Z'
+            requiredProperties:
+              - id
+              - name
+              - status
+              - source
+              - target
+              - createdAt
+        examples:
+          example:
+            value:
+              id: bc_abc123
+              name: Add README Documentation
+              status: RUNNING
+              source:
+                repository: https://github.com/your-org/your-repo
+                ref: main
+              target:
+                branchName: cursor/add-readme-1234
+                url: https://cursor.com/agents?id=bc_abc123
+                prUrl: https://github.com/your-org/your-repo/pull/1234
+                autoCreatePr: false
+              summary: >-
+                Added README.md with installation instructions and usage
+                examples
+              createdAt: '2024-01-15T10:30:00Z'
+        description: Agent details retrieved successfully
+    '400':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - &ref_0
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: Human-readable error message
+                      code:
+                        type: string
+                        description: Machine-readable error code
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Invalid request - bad agent ID format
+    '401':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Unauthorized - invalid or missing API key
+    '403':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Forbidden - insufficient permissions
+    '404':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Agent not found or access denied
+    '429':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Rate limit exceeded
+    '500':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Internal server error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
 
-### List Models
-https://anysphere-andrew-agentapi.mintlify.app/background-agent/api/list-models.md
+````# Agent Conversation
+
+> Retrieve the conversation history of a background agent.
+
+## OpenAPI
+
+````yaml en/background-agent/api/openapi.yaml get /v0/agents/{id}/conversation
+paths:
+  path: /v0/agents/{id}/conversation
+  method: get
+  servers:
+    - url: https://api.cursor.com
+      description: Production server
+  request:
+    security:
+      - title: bearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: API key from Cursor Dashboard
+          cookie: {}
+    parameters:
+      path:
+        id:
+          schema:
+            - type: string
+              required: true
+              description: Unique identifier for the background agent
+              example: bc_abc123
+      query: {}
+      header: {}
+      cookie: {}
+    body: {}
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              id:
+                allOf:
+                  - type: string
+                    description: Unique identifier for the background agent
+                    example: bc_abc123
+              messages:
+                allOf:
+                  - type: array
+                    description: Array of conversation messages ordered chronologically
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - type
+                        - text
+                      properties:
+                        id:
+                          type: string
+                          description: Unique identifier for the message
+                          example: msg_123
+                        type:
+                          type: string
+                          enum:
+                            - user_message
+                            - assistant_message
+                          description: Type of message - either from the user or the model
+                          example: user_message
+                        text:
+                          type: string
+                          description: The content of the message
+                          example: Add a README.md file with installation instructions
+            requiredProperties:
+              - id
+              - messages
+        examples:
+          example:
+            value:
+              id: bc_abc123
+              messages:
+                - id: msg_123
+                  type: user_message
+                  text: Add a README.md file with installation instructions
+        description: Conversation retrieved successfully
+    '400':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - &ref_0
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: Human-readable error message
+                      code:
+                        type: string
+                        description: Machine-readable error code
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Invalid request - bad agent ID format
+    '401':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Unauthorized - invalid or missing API key
+    '403':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Forbidden - insufficient permissions
+    '404':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Agent not found or access denied
+    '409':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Conflict - agent is deleted or archived
+    '429':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Rate limit exceeded
+    '500':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Internal server error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````# Launch an Agent
+
+> Start a new background agent to work on your repository.
+
+## OpenAPI
+
+````yaml en/background-agent/api/openapi.yaml post /v0/agents
+paths:
+  path: /v0/agents
+  method: post
+  servers:
+    - url: https://api.cursor.com
+      description: Production server
+  request:
+    security:
+      - title: bearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: API key from Cursor Dashboard
+          cookie: {}
+    parameters:
+      path: {}
+      query: {}
+      header: {}
+      cookie: {}
+    body:
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              prompt:
+                allOf:
+                  - type: object
+                    required:
+                      - text
+                    properties:
+                      text:
+                        type: string
+                        minLength: 1
+                        description: The task or instructions for the agent to execute
+                        example: Add a README.md file with installation instructions
+                      images:
+                        type: array
+                        maxItems: 5
+                        items:
+                          $ref: '#/components/schemas/Image'
+                        description: Optional array of base64 encoded images (max 5)
+                        example:
+                          - data: iVBORw0KGgoAAAANSUhEUgAA...
+                            dimension:
+                              width: 1024
+                              height: 768
+              model:
+                allOf:
+                  - type: string
+                    minLength: 1
+                    description: The LLM to use
+                    example: claude-4-sonnet
+              source:
+                allOf:
+                  - type: object
+                    required:
+                      - repository
+                    properties:
+                      repository:
+                        type: string
+                        minLength: 1
+                        description: The GitHub repository URL
+                        example: https://github.com/your-org/your-repo
+                      ref:
+                        type: string
+                        minLength: 1
+                        description: Git ref (branch/tag) to use as the base branch
+                        example: main
+              target:
+                allOf:
+                  - type: object
+                    properties:
+                      autoCreatePr:
+                        type: boolean
+                        description: >-
+                          Whether to automatically create a pull request when
+                          the agent completes
+                        default: false
+                      branchName:
+                        type: string
+                        minLength: 1
+                        description: Custom branch name for the agent to create
+                        example: feature/add-readme
+              webhook:
+                allOf:
+                  - type: object
+                    required:
+                      - url
+                    properties:
+                      url:
+                        type: string
+                        format: uri
+                        maxLength: 2048
+                        description: >-
+                          URL to receive webhook notifications about agent
+                          status changes
+                        example: https://example.com/webhooks/cursor-agent
+                      secret:
+                        type: string
+                        minLength: 32
+                        maxLength: 256
+                        description: Secret key for webhook payload verification
+                        example: your-webhook-secret-key-minimum-32-characters
+            required: true
+            refIdentifier: '#/components/schemas/CreateAgentRequest'
+            requiredProperties:
+              - prompt
+              - source
+        examples:
+          example:
+            value:
+              prompt:
+                text: Add a README.md file with installation instructions
+                images:
+                  - data: iVBORw0KGgoAAAANSUhEUgAA...
+                    dimension:
+                      width: 1024
+                      height: 768
+              model: claude-4-sonnet
+              source:
+                repository: https://github.com/your-org/your-repo
+                ref: main
+              target:
+                autoCreatePr: false
+                branchName: feature/add-readme
+              webhook:
+                url: https://example.com/webhooks/cursor-agent
+                secret: your-webhook-secret-key-minimum-32-characters
+  response:
+    '201':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              id:
+                allOf:
+                  - type: string
+                    description: Unique identifier for the background agent
+                    example: bc_abc123
+              name:
+                allOf:
+                  - type: string
+                    description: Name for the agent
+                    example: Add README Documentation
+              status:
+                allOf:
+                  - type: string
+                    enum:
+                      - CREATING
+                    description: Initial status of the newly created agent
+                    example: CREATING
+              source:
+                allOf:
+                  - type: object
+                    required:
+                      - repository
+                    properties:
+                      repository:
+                        type: string
+                        description: The GitHub repository URL
+                        example: https://github.com/your-org/your-repo
+                      ref:
+                        type: string
+                        description: Git ref (branch/tag) used as the base branch
+                        example: main
+              target:
+                allOf:
+                  - type: object
+                    required:
+                      - url
+                    properties:
+                      branchName:
+                        type: string
+                        description: The Git branch name where the agent is working
+                        example: cursor/add-readme-1234
+                      url:
+                        type: string
+                        description: URL to view the agent in Cursor Web
+                        example: https://cursor.com/agents?id=bc_abc123
+                      autoCreatePr:
+                        type: boolean
+                        description: Whether a pull request will be automatically created
+                        example: false
+              createdAt:
+                allOf:
+                  - type: string
+                    format: date-time
+                    description: When the agent was created
+                    example: '2024-01-15T10:30:00Z'
+            requiredProperties:
+              - id
+              - name
+              - status
+              - source
+              - target
+              - createdAt
+        examples:
+          example:
+            value:
+              id: bc_abc123
+              name: Add README Documentation
+              status: CREATING
+              source:
+                repository: https://github.com/your-org/your-repo
+                ref: main
+              target:
+                branchName: cursor/add-readme-1234
+                url: https://cursor.com/agents?id=bc_abc123
+                autoCreatePr: false
+              createdAt: '2024-01-15T10:30:00Z'
+        description: Agent created successfully
+    '400':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - &ref_0
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: Human-readable error message
+                      code:
+                        type: string
+                        description: Machine-readable error code
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Invalid request
+    '401':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Unauthorized - invalid or missing API key
+    '403':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: >-
+          Forbidden - insufficient permissions, plan limits exceeded, or storage
+          full
+    '429':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Rate limit exceeded
+    '500':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Internal server error
+  deprecated: false
+  type: path
+components:
+  schemas:
+    ImageDimension:
+      type: object
+      required:
+        - width
+        - height
+      properties:
+        width:
+          type: integer
+          minimum: 1
+          description: Width must be a positive integer
+        height:
+          type: integer
+          minimum: 1
+          description: Height must be a positive integer
+    Image:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: string
+          minLength: 1
+          description: Base64 encoded image data
+          example: iVBORw0KGgoAAAANSUhEUgAA...
+        dimension:
+          $ref: '#/components/schemas/ImageDimension'
+
+````# Add Follow-up
+
+> Send an additional instruction to a running background agent.
+
+## OpenAPI
+
+````yaml en/background-agent/api/openapi.yaml post /v0/agents/{id}/followup
+paths:
+  path: /v0/agents/{id}/followup
+  method: post
+  servers:
+    - url: https://api.cursor.com
+      description: Production server
+  request:
+    security:
+      - title: bearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: API key from Cursor Dashboard
+          cookie: {}
+    parameters:
+      path:
+        id:
+          schema:
+            - type: string
+              required: true
+              description: Unique identifier for the background agent
+              example: bc_abc123
+      query: {}
+      header: {}
+      cookie: {}
+    body:
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              prompt:
+                allOf:
+                  - type: object
+                    required:
+                      - text
+                    properties:
+                      text:
+                        type: string
+                        minLength: 1
+                        description: The followup instruction for the agent
+                        example: Also add a section about troubleshooting
+                      images:
+                        type: array
+                        maxItems: 5
+                        items:
+                          $ref: '#/components/schemas/Image'
+                        description: Optional array of base64 encoded images (max 5)
+                        example:
+                          - data: iVBORw0KGgoAAAANSUhEUgAA...
+                            dimension:
+                              width: 1024
+                              height: 768
+            required: true
+            requiredProperties:
+              - prompt
+        examples:
+          example:
+            value:
+              prompt:
+                text: Also add a section about troubleshooting
+                images:
+                  - data: iVBORw0KGgoAAAANSUhEUgAA...
+                    dimension:
+                      width: 1024
+                      height: 768
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              id:
+                allOf:
+                  - type: string
+                    description: Unique identifier for the background agent
+                    example: bc_abc123
+            requiredProperties:
+              - id
+        examples:
+          example:
+            value:
+              id: bc_abc123
+        description: Followup added successfully
+    '400':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - &ref_0
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: Human-readable error message
+                      code:
+                        type: string
+                        description: Machine-readable error code
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Invalid request - bad agent ID format or invalid request body
+    '401':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Unauthorized - invalid or missing API key
+    '403':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Forbidden - insufficient permissions
+    '404':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Agent not found or access denied
+    '409':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Conflict - agent is deleted or archived
+    '429':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Rate limit exceeded
+    '500':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Internal server error
+  deprecated: false
+  type: path
+components:
+  schemas:
+    ImageDimension:
+      type: object
+      required:
+        - width
+        - height
+      properties:
+        width:
+          type: integer
+          minimum: 1
+          description: Width must be a positive integer
+        height:
+          type: integer
+          minimum: 1
+          description: Height must be a positive integer
+    Image:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: string
+          minLength: 1
+          description: Base64 encoded image data
+          example: iVBORw0KGgoAAAANSUhEUgAA...
+        dimension:
+          $ref: '#/components/schemas/ImageDimension'
+
+````# Delete an Agent
+
+> Permanently delete a background agent and its associated resources.
+
+## OpenAPI
+
+````yaml en/background-agent/api/openapi.yaml delete /v0/agents/{id}
+paths:
+  path: /v0/agents/{id}
+  method: delete
+  servers:
+    - url: https://api.cursor.com
+      description: Production server
+  request:
+    security:
+      - title: bearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: API key from Cursor Dashboard
+          cookie: {}
+    parameters:
+      path:
+        id:
+          schema:
+            - type: string
+              required: true
+              description: Unique identifier for the background agent
+              example: bc_abc123
+      query: {}
+      header: {}
+      cookie: {}
+    body: {}
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              id:
+                allOf:
+                  - type: string
+                    description: Unique identifier for the background agent
+                    example: bc_abc123
+            requiredProperties:
+              - id
+        examples:
+          example:
+            value:
+              id: bc_abc123
+        description: Agent deleted successfully
+    '400':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - &ref_0
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: Human-readable error message
+                      code:
+                        type: string
+                        description: Machine-readable error code
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Invalid request - bad agent ID format
+    '401':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Unauthorized - invalid or missing API key
+    '403':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Forbidden - insufficient permissions
+    '404':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Agent not found or access denied
+    '409':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Conflict - agent is deleted or archived
+    '429':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Rate limit exceeded
+    '500':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Internal server error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````# API Key Info
+
+> Retrieve metadata about the API key used for authentication.
+
+## OpenAPI
+
+````yaml en/background-agent/api/openapi.yaml get /v0/me
+paths:
+  path: /v0/me
+  method: get
+  servers:
+    - url: https://api.cursor.com
+      description: Production server
+  request:
+    security:
+      - title: bearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: API key from Cursor Dashboard
+          cookie: {}
+    parameters:
+      path: {}
+      query: {}
+      header: {}
+      cookie: {}
+    body: {}
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              apiKeyName:
+                allOf:
+                  - type: string
+                    description: The name of the API key
+                    example: Production API Key
+              createdAt:
+                allOf:
+                  - type: string
+                    format: date-time
+                    description: When the API key was created
+                    example: '2024-01-15T10:30:00Z'
+              userEmail:
+                allOf:
+                  - type: string
+                    format: email
+                    description: >-
+                      Email address of the user who owns the API key (if
+                      available)
+                    example: developer@example.com
+            requiredProperties:
+              - apiKeyName
+              - createdAt
+        examples:
+          example:
+            value:
+              apiKeyName: Production API Key
+              createdAt: '2024-01-15T10:30:00Z'
+              userEmail: developer@example.com
+        description: API key information retrieved successfully
+    '401':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - &ref_0
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: Human-readable error message
+                      code:
+                        type: string
+                        description: Machine-readable error code
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Unauthorized - invalid or missing API key
+    '404':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: API key not found
+    '429':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Rate limit exceeded
+    '500':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Internal server error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````# List Models
+
+> Retrieve a list of recommended models for background agents.
+
+## OpenAPI
+
+````yaml en/background-agent/api/openapi.yaml get /v0/models
+paths:
+  path: /v0/models
+  method: get
+  servers:
+    - url: https://api.cursor.com
+      description: Production server
+  request:
+    security:
+      - title: bearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: API key from Cursor Dashboard
+          cookie: {}
+    parameters:
+      path: {}
+      query: {}
+      header: {}
+      cookie: {}
+    body: {}
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              models:
+                allOf:
+                  - type: array
+                    description: Array of available model names
+                    items:
+                      type: string
+                      minLength: 1
+                    example:
+                      - claude-4-sonnet-thinking
+                      - o3
+                      - claude-4-opus-thinking
+            requiredProperties:
+              - models
+        examples:
+          example:
+            value:
+              models:
+                - claude-4-sonnet-thinking
+                - o3
+                - claude-4-opus-thinking
+        description: Models retrieved successfully
+    '401':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - &ref_0
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: Human-readable error message
+                      code:
+                        type: string
+                        description: Machine-readable error code
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Unauthorized - invalid or missing API key
+    '429':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Rate limit exceeded
+    '500':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Internal server error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````# List GitHub Repositories
+
+> Retrieve a list of GitHub repositories accessible to the authenticated user.
+
+## OpenAPI
+
+````yaml en/background-agent/api/openapi.yaml get /v0/repositories
+paths:
+  path: /v0/repositories
+  method: get
+  servers:
+    - url: https://api.cursor.com
+      description: Production server
+  request:
+    security:
+      - title: bearerAuth
+        parameters:
+          query: {}
+          header:
+            Authorization:
+              type: http
+              scheme: bearer
+              description: API key from Cursor Dashboard
+          cookie: {}
+    parameters:
+      path: {}
+      query: {}
+      header: {}
+      cookie: {}
+    body: {}
+  response:
+    '200':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              repositories:
+                allOf:
+                  - type: array
+                    description: Array of GitHub repositories the user has access to
+                    items:
+                      type: object
+                      required:
+                        - owner
+                        - name
+                        - repository
+                      properties:
+                        owner:
+                          type: string
+                          description: The owner of the repository (user or organization)
+                          example: your-org
+                        name:
+                          type: string
+                          description: The name of the repository
+                          example: your-repo
+                        repository:
+                          type: string
+                          format: uri
+                          description: The full URL to the GitHub repository
+                          example: https://github.com/your-org/your-repo
+            requiredProperties:
+              - repositories
+        examples:
+          example:
+            value:
+              repositories:
+                - owner: your-org
+                  name: your-repo
+                  repository: https://github.com/your-org/your-repo
+        description: Repositories retrieved successfully
+    '401':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - &ref_0
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: Human-readable error message
+                      code:
+                        type: string
+                        description: Machine-readable error code
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Unauthorized - invalid or missing API key
+    '429':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Rate limit exceeded
+    '500':
+      application/json:
+        schemaArray:
+          - type: object
+            properties:
+              error:
+                allOf:
+                  - *ref_0
+            refIdentifier: '#/components/schemas/Error'
+        examples:
+          example:
+            value:
+              error:
+                message: <string>
+                code: <string>
+        description: Internal server error
+  deprecated: false
+  type: path
+components:
+  schemas: {}
+
+````

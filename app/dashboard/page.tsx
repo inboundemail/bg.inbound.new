@@ -37,7 +37,8 @@ interface AgentLog {
 
 interface CursorAgent {
   id: string;
-  status: string;
+  name: string;
+  status: 'RUNNING' | 'FINISHED' | 'ERROR' | 'CREATING' | 'EXPIRED';
   source: {
     repository: string;
     ref: string;
@@ -48,7 +49,8 @@ interface CursorAgent {
     prUrl?: string;
     autoCreatePr: boolean;
   };
-  summary: string;
+  summary?: string;
+  createdAt: string;
 }
 
 export default function DashboardPage() {
@@ -724,7 +726,10 @@ export default function DashboardPage() {
                     </div>
                     
                     <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-900">{agent.summary}</p>
+                      <p className="text-sm font-medium text-gray-900">{agent.name || agent.summary || 'Agent working...'}</p>
+                      {agent.summary && agent.name && (
+                        <p className="text-xs text-gray-600">{agent.summary}</p>
+                      )}
                       
                       <div className="flex flex-wrap gap-4 text-xs text-gray-600">
                         <span>{agent.source.repository.replace('https://github.com/', '')}</span>
