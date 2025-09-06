@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { InboundEmailClient } from '@inboundemail/sdk'
+import { InboundEmailClient, PostEmailReplyRequest } from '@inboundemail/sdk'
 import crypto from 'crypto'
 
 // Cursor webhook payload interface
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const emailObject = await inbound.email.get(emailId);
 
-    const fromEmail = emailObject.data?.to[0]?.replace(/\\/g, '');
+    const fromEmail = emailObject.data?.to;
 
     console.log('🔍 From email:', fromEmail);
     
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       
       console.log('📤 Sending reply to', emailId, 'with payload:', JSON.stringify(replyPayload, null, 2));
       
-      const { data, error } = await inbound.email.sent.reply(emailId, replyPayload);
+      const { data, error } = await inbound.email.sent.reply(emailId, replyPayload as PostEmailReplyRequest);
       
       if (error) {
         console.error('❌ Failed to send reply via Inbound:', error);
