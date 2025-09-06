@@ -159,7 +159,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       
       console.log('📤 Sending reply to', emailId, 'with payload:', JSON.stringify(replyPayload, null, 2));
       
-      const { data, error } = await inbound.email.reply(emailId, replyPayload);
+      const { data, error } = await inbound.email.sent.reply(emailId, replyPayload);
       
       if (error) {
         console.error('❌ Failed to send reply via Inbound:', error);

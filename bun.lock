@@ -6,7 +6,7 @@
       "dependencies": {
         "@better-auth/cli": "^1.3.4",
         "@hookform/resolvers": "^5.2.1",
-        "@inboundemail/sdk": "^4.1.0",
+        "@inboundemail/sdk": "^4.2.0",
         "@modelcontextprotocol/sdk": "^1.17.4",
         "@radix-ui/react-label": "^2.1.7",
         "@radix-ui/react-slot": "^1.2.3",
@@ -237,7 +237,7 @@
 
     "@img/sharp-win32-x64": ["@img/sharp-win32-x64@0.34.3", "", { "os": "win32", "cpu": "x64" }, "sha512-OWwz05d++TxzLEv4VnsTz5CmZ6mI6S05sfQGEMrNrQcOEERbX46332IvE7pO/EUiw7jUrrS40z/M7kPyjfl04g=="],
 
-    "@inboundemail/sdk": ["@inboundemail/sdk@4.1.0", "", { "dependencies": { "react": "^18.0.0", "react-dom": "^18.0.0" } }, "sha512-RfnD3qodMhb6hKu+2MqSCpcUEWuDZGKB6UQzNX5quolswMJCTFcNVWKT5ubyYphvU7a7URu22CrMgHMk9A6Jyg=="],
+    "@inboundemail/sdk": ["@inboundemail/sdk@4.2.0", "", { "dependencies": { "react": "^18.0.0", "react-dom": "^18.0.0" } }, "sha512-8XhvzUtmVID4BapJwnL8WLX+GGPzD2b+0/1aPbZEnOkunYTBKnXxHbDcnHEa2/fOJEjFhgmuvk1c3lPpe2MFMg=="],
 
     "@isaacs/cliui": ["@isaacs/cliui@8.0.2", "", { "dependencies": { "string-width": "^5.1.2", "string-width-cjs": "npm:string-width@^4.2.0", "strip-ansi": "^7.0.1", "strip-ansi-cjs": "npm:strip-ansi@^6.0.1", "wrap-ansi": "^8.1.0", "wrap-ansi-cjs": "npm:wrap-ansi@^7.0.0" } }, "sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA=="],
 
