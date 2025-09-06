@@ -75,7 +75,7 @@ async function createCursorAgent(
     // Add webhook configuration for completion notifications
     if (originalEmailId) {
       const webhookSecret = generateWebhookSecret();
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+      const baseUrl = process.env.BETTER_AUTH_URL || 'https://bg.inbound.new';
       const webhookUrl = `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/api/cursor-webhooks/${originalEmailId}`;
       
       agentRequest.webhook = {
