@@ -157,7 +157,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         subject: reply.subject
       };
       
-      console.log('📤 Sending reply with payload:', JSON.stringify(replyPayload, null, 2));
+      console.log('📤 Sending reply to', emailId, 'with payload:', JSON.stringify(replyPayload, null, 2));
       
       const { data, error } = await inbound.email.reply(emailId, replyPayload);
       
