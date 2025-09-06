@@ -116,7 +116,7 @@ export default function DashboardPage() {
 
   const fetchEmailAgents = async () => {
     try {
-      const response = await fetch('/api/webhooks');
+      const response = await fetch('/api/email-agents');
       if (response.ok) {
         const data = await response.json();
         setEmailAgents(data.agents);
@@ -178,7 +178,7 @@ export default function DashboardPage() {
           : []
       };
 
-      const response = await fetch('/api/webhooks', {
+      const response = await fetch('/api/email-agents', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -214,7 +214,7 @@ export default function DashboardPage() {
 
   const toggleEmailAgentStatus = async (id: string, isActive: boolean) => {
     try {
-      const response = await fetch(`/api/webhooks/${id}`, {
+      const response = await fetch(`/api/email-agents/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -236,7 +236,7 @@ export default function DashboardPage() {
     }
 
     try {
-      const response = await fetch(`/api/webhooks/${id}`, {
+      const response = await fetch(`/api/email-agents/${id}`, {
         method: 'DELETE',
       });
 
