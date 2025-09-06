@@ -99,7 +99,7 @@ export default function SignInPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4">
           <div className="flex justify-center">
-            <img src="/inbound-logo-3.png" alt="bg by inbound" className="h-16 w-16 rounded-xl" />
+            <img src="/logo-dark.png" alt="bg by inbound" className="h-16 w-16 rounded-xl" />
           </div>
           <CardTitle className="text-2xl font-bold text-center">Sign in to bg by inbound</CardTitle>
           <CardDescription className="text-center">

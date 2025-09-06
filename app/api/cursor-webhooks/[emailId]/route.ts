@@ -149,7 +149,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         from: process.env.FROM_EMAIL || 'agent@bg.inbound.new',
         text: reply.text,
         subject: reply.subject,
-        includeOriginal: true
+        simple: true
       });
       
       if (error) {
