@@ -338,8 +338,7 @@ const handler = withMcpAuth(auth, async (req: Request) => {
                                 `   Status: ${agent.status}\n` +
                                 `   Repository: ${agent.source.repository}\n` +
                                 `   Branch: ${agent.source.ref}\n` +
-                                `   Created: ${new Date(agent.createdAt).toLocaleString()}\n` +
-                                `   Updated: ${new Date(agent.updatedAt).toLocaleString()}` +
+                                `   Created: ${new Date(agent.createdAt).toLocaleString()}` +
                                 (agent.summary ? `\n   Summary: ${agent.summary}` : '') +
                                 (agent.target.prUrl ? `\n   🔗 PR: ${agent.target.prUrl}` : '');
                         }).join('\n\n');
@@ -415,7 +414,7 @@ const handler = withMcpAuth(auth, async (req: Request) => {
                             `📊 **Status:** ${agent.status}\n` +
                             `📁 **Repository:** ${agent.source.repository}\n` +
                             `🌿 **Branch:** ${agent.source.ref}\n` +
-                            `🕐 **Created:** ${new Date(agent.createdAt).toLocaleString()}\n` +
+                            `🕐 **Created:** ${new Date(agent.createdAt).toLocaleString()}` +
                             `📝 **Auto-create PR:** ${agent.target.autoCreatePr ? 'Yes' : 'No'}\n` +
                             (agent.target.branchName ? `🌿 **Target Branch:** ${agent.target.branchName}\n` : '') +
                             (agent.target.url ? `🔗 **View in Cursor:** ${agent.target.url}\n` : '') +

@@ -6,6 +6,7 @@ import { emailAgent, user, agentLaunchLog } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { extractEmailAddress } from '@/lib/utils'
+import crypto from 'crypto'
 
 // Updated to match official API spec
 interface CursorAgentRequest {
@@ -34,7 +35,17 @@ interface CursorAgentRequest {
   };
 }
 
-async function createCursorAgent(config: any, prompt: string, cursorApiKey: string): Promise<string | null> {
+// Generate a secure webhook secret (minimum 32 characters as required by Cursor)
+function generateWebhookSecret(): string {
+  return crypto.randomBytes(32).toString('hex'); // 64 character hex string
+}
+
+async function createCursorAgent(
+  config: any, 
+  prompt: string, 
+  cursorApiKey: string, 
+  originalEmailId?: string
+): Promise<string | null> {
   try {
     // Prepare the request according to the new API structure
     const agentRequest: CursorAgentRequest = {
@@ -61,12 +72,22 @@ async function createCursorAgent(config: any, prompt: string, cursorApiKey: stri
       }
     }
 
-    // Add webhook if configured
-    if (config.webhookUrl) {
+    // Add webhook configuration for completion notifications
+    if (originalEmailId) {
+      const webhookSecret = generateWebhookSecret();
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+      const webhookUrl = `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/api/cursor-webhooks/${originalEmailId}`;
+      
       agentRequest.webhook = {
-        url: config.webhookUrl,
-        secret: config.webhookSecret
+        url: webhookUrl,
+        secret: webhookSecret
       };
+      
+      console.log('🔔 Webhook configured:', {
+        url: webhookUrl,
+        hasSecret: !!webhookSecret,
+        originalEmailId
+      });
     }
 
     console.log('Creating Cursor agent with request:', JSON.stringify(agentRequest, null, 2));
@@ -268,7 +289,10 @@ From: ${senderEmailText || 'Unknown sender'}
 Please analyze this email and create appropriate code changes, documentation updates, or other relevant actions based on the content. If this appears to be a bug report, create a fix. If it's a feature request, implement the feature. If it's a question, create documentation or examples to help answer similar questions in the future.
         `.trim();
 
-        const cursorAgentId = await createCursorAgent(emailAgentConfig, prompt, cursorApiKey);
+        // Extract the original email ID from the Inbound payload for webhook replies
+        const originalEmailId = email.id;
+        
+        const cursorAgentId = await createCursorAgent(emailAgentConfig, prompt, cursorApiKey, originalEmailId);
         
         if (cursorAgentId) {
           console.log(`Created Cursor agent ${cursorAgentId} for email agent ${emailAgentConfig.name}`);
