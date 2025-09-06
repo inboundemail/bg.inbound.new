@@ -154,8 +154,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const replyPayload = {
         from: fromEmail || 'BG by Inbound <agent@bg.inbound.new>',
         text: reply.text,
-        subject: reply.subject,
-        simple: true
+        subject: reply.subject
       };
       
       console.log('📤 Sending reply with payload:', JSON.stringify(replyPayload, null, 2));
