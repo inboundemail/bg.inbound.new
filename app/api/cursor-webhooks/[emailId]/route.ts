@@ -142,15 +142,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     
     // Generate reply content
     const reply = generateReplyContent(payload);
+
+    const emailObject = await inbound.email.get(emailId);
+
+    const fromEmail = emailObject.data?.to[0]?.replace(/\\/g, '');
+
+    console.log('🔍 From email:', fromEmail);
     
     // Send reply using Inbound SDK
     try {
-      const { data, error } = await inbound.email.reply(emailId, {
-        from: process.env.FROM_EMAIL || 'agent@bg.inbound.new',
+      const replyPayload = {
+        from: fromEmail || 'BG by Inbound <agent@bg.inbound.new>',
         text: reply.text,
         subject: reply.subject,
         simple: true
-      });
+      };
+      
+      console.log('📤 Sending reply with payload:', JSON.stringify(replyPayload, null, 2));
+      
+      const { data, error } = await inbound.email.reply(emailId, replyPayload);
       
       if (error) {
         console.error('❌ Failed to send reply via Inbound:', error);
