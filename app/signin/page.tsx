@@ -15,6 +15,25 @@ export default function SignInPage() {
   const [error, setError] = useState("");
   const [emailSent, setEmailSent] = useState(false);
 
+  const handleGithubSignIn = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const { error } = await authClient.signIn.social({
+        provider: "github",
+        callbackURL: "/dashboard",
+      });
+      if (error) {
+        throw new Error(error.message || "Failed to sign in with GitHub");
+      }
+    } catch (err) {
+      console.error('GitHub sign-in error:', err);
+      setError("Failed to sign in with GitHub. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleMagicLinkSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -128,6 +147,26 @@ export default function SignInPage() {
               size="lg"
             >
               {loading ? "Sending magic link..." : "Send magic link"}
+            </Button>
+
+            <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={loading}
+              size="lg"
+              onClick={handleGithubSignIn}
+            >
+              Continue with GitHub
             </Button>
             
             {error && (
