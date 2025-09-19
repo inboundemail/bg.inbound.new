@@ -18,7 +18,7 @@ export default async function Home() {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center space-y-8 p-8">
         <div className="flex flex-col items-center space-y-6">
-          <img src="/inbound-logo-3.png" alt="bg by inbound" className="h-24 w-24 rounded-2xl" />
+          <img src="/inbound-logo.png" alt="bg by inbound" className="h-24 w-24 rounded-2xl" />
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
             bg by inbound
           </h1>
