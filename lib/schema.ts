@@ -117,6 +117,20 @@ export const agentLaunchLog = pgTable("agent_launch_log", {
   ).notNull(),
 });
 
+export const cursorAgentMapping = pgTable("cursor_agent_mapping", {
+  id: text("id").primaryKey(),
+  cursorAgentId: text("cursor_agent_id").notNull().unique(), // The ID from Cursor API
+  emailAgentId: text("email_agent_id")
+    .notNull()
+    .references(() => emailAgent.id, { onDelete: "cascade" }),
+  originalEmailId: text("original_email_id").notNull(), // Inbound email ID for replies
+  emailAddress: text("email_address").notNull(), // Email address to send response from
+  webhookSecret: text("webhook_secret"), // Webhook secret for verification
+  createdAt: timestamp("created_at").$defaultFn(
+    () => /* @__PURE__ */ new Date(),
+  ).notNull(),
+});
+
 export const oauthApplication = pgTable("oauth_application", {
   id: text("id").primaryKey(),
   name: text("name"),
@@ -154,5 +168,3 @@ export const oauthConsent = pgTable("oauth_consent", {
   updatedAt: timestamp("updated_at"),
   consentGiven: boolean("consent_given"),
 });
-
-

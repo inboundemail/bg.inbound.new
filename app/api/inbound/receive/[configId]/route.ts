@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isInboundWebhook } from '@inboundemail/sdk'
 import type { InboundWebhookPayload } from '@inboundemail/sdk'
 import { db } from '@/lib/db'
-import { emailAgent, user, agentLaunchLog } from '@/lib/schema'
+import { emailAgent, user, agentLaunchLog, cursorAgentMapping } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { extractEmailAddress } from '@/lib/utils'
@@ -75,19 +75,34 @@ async function createCursorAgent(
     // Add webhook configuration for completion notifications
     if (originalEmailId) {
       const webhookSecret = generateWebhookSecret();
-      const baseUrl = process.env.BETTER_AUTH_URL || 'https://bg.inbound.new';
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.BETTER_AUTH_URL || 'https://bg.inbound.new';
       const webhookUrl = `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/api/cursor-webhooks/${originalEmailId}`;
-      
+
       agentRequest.webhook = {
         url: webhookUrl,
         secret: webhookSecret
       };
-      
+
       console.log('🔔 Webhook configured:', {
         url: webhookUrl,
         hasSecret: !!webhookSecret,
         originalEmailId
       });
+
+      // Store webhook secret in database for later verification
+      try {
+        await db.update(emailAgent)
+          .set({
+            webhookSecret: webhookSecret,
+            webhookUrl: webhookUrl,
+            updatedAt: new Date()
+          })
+          .where(eq(emailAgent.id, config.id));
+        console.log('✅ Webhook secret stored in database');
+      } catch (error) {
+        console.error('❌ Failed to store webhook secret:', error);
+        // Continue anyway - the webhook will still work, just without signature verification
+      }
     }
 
     console.log('Creating Cursor agent with request:', JSON.stringify(agentRequest, null, 2));
@@ -122,7 +137,26 @@ async function createCursorAgent(
 
     const result = await response.json();
     console.log('Cursor agent created successfully:', result);
-    return result.id;
+    const cursorAgentId = result.id;
+
+    // Store the mapping between cursorAgentId and email address for webhook lookups
+    if (cursorAgentId && originalEmailId) {
+      try {
+        await db.insert(cursorAgentMapping).values({
+          id: nanoid(),
+          cursorAgentId: cursorAgentId,
+          emailAgentId: config.id,
+          originalEmailId: originalEmailId,
+          emailAddress: config.emailAddress,
+        });
+        console.log('✅ Cursor agent mapping stored in database');
+      } catch (error) {
+        console.error('❌ Failed to store cursor agent mapping:', error);
+        // Continue anyway - the agent was created successfully
+      }
+    }
+
+    return cursorAgentId;
   } catch (error) {
     console.error('Error creating Cursor agent:', error);
     return null;

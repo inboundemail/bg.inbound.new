@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     const agentId = nanoid();
     
     // Create the InboundEmail endpoint and email address
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.nextUrl.origin;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.BETTER_AUTH_URL || request.nextUrl.origin;
     const webhookUrl = `${baseUrl}/api/inbound/receive/${agentId}`;
     
     let emailAgentResult;

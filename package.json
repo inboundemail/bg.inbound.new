@@ -10,7 +10,8 @@
     "db:generate": "bunx @better-auth/cli generate",
     "db:push": "bunx drizzle-kit push",
     "db:migrate": "bunx drizzle-kit generate && bunx drizzle-kit migrate",
-    "db:studio": "bunx drizzle-kit studio"
+    "db:studio": "bunx drizzle-kit studio",
+    "test:webhook": "bun run scripts/test-webhook.ts"
   },
   "dependencies": {
     "@better-auth/cli": "^1.3.4",
