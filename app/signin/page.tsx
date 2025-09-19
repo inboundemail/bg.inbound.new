@@ -160,7 +160,7 @@ export default function SignInPage() {
 
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               className="w-full"
               disabled={loading}
               size="lg"

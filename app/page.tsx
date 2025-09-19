@@ -24,7 +24,7 @@ export default async function Home() {
           </h1>
         </div>
         <p className="text-lg text-muted-foreground max-w-md mx-auto">
-          Transform emails into code with AI-powered background agents
+          Start cursor background agents by just forwarding emails to your agents. 
         </p>
         <div className="flex flex-col space-y-4 max-w-sm mx-auto">
           <Link href="/signin">

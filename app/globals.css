@@ -6,7 +6,7 @@
   /* Custom Dark Theme - Background: #0F0114, Text: #FFFFFF, Cards: #14021C */
   --background: 293 90% 4%;
   --foreground: 0 0% 100%;
-  --card: 282 87% 6%;
+  --card: #120119;
   --card-foreground: 0 0% 100%;
   --popover: 282 87% 6%;
   --popover-foreground: 0 0% 100%;
@@ -49,7 +49,7 @@
   /* Same Custom Dark Theme for consistency */
   --background: 293 90% 4%;
   --foreground: 0 0% 100%;
-  --card: 282 87% 6%;
+  --card: 282.5 89% 14.3%;
   --card-foreground: 0 0% 100%;
   --popover: 282 87% 6%;
   --popover-foreground: 0 0% 100%;
