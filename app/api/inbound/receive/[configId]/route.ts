@@ -230,6 +230,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
         const { email } = payload
 
+        console.log('📄 Inbound webhook payload:', payload);
+
         // Process and log the email
         console.log('=== New Email Received ===')
         console.log(`Config ID: ${configId}`)
